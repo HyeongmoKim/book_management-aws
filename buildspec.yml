@@ -5,35 +5,23 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Current directory status:"
-      - pwd
-      - ls -alR  # 모든 하위 폴더와 파일을 상세히 출력하여 파일 위치를 강제로 확인합니다.
-      
-      # 만약 파일이 루트에 없고 특정 폴더(예: frontend) 안에 있다면 해당 폴더로 이동하는 로직 추가
-      # 아래 예시는 파일이 발견되지 않을 경우를 대비해 '찾아서 이동'하는 안전장치입니다.
-      - |
-        if [ ! -f "package.json" ]; then
-          echo "package.json not found in root. Searching..."
-          TARGET_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
-          if [ -n "$TARGET_DIR" ]; then
-            echo "Moving to directory: $TARGET_DIR"
-            cd "$TARGET_DIR"
-          fi
-        fi
-      
-      - echo "Starting npm install..."
-      - npm install  # ci 대신 install을 사용하여 lock 파일 유무와 상관없이 진행 시도
+      - echo "Moving to Frontend directory..."
+      - cd frontend
+      - npm ci  # 이제 폴더가 확실하므로 ci를 사용해도 됩니다.
 
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
+      # 루트가 아니므로 다시 루트로 나가거나, 그냥 실행 (pre_build 시작 시 경로는 다시 루트임)
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
-      - echo "Build started on `date`"
+      - echo "Build started..."
+      - cd frontend
       - npm run build
-      - echo "Building the Docker image..."
+      - echo "Building Docker image..."
+      # 이미지 구조상 Dockerfile이 frontend 폴더 안에 있으므로 여기서 실행
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
