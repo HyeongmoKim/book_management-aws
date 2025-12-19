@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: a084110-backend-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: backend
   ports:
