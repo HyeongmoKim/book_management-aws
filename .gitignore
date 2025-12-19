@@ -1,0 +1,5 @@
+frontend/node_modules/
+frontend/src/node_modules/
+frontend/src/.vite/
+node_modules/
+.vite/.idea/workspace.xml

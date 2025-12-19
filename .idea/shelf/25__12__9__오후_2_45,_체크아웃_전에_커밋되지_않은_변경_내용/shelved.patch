@@ -1,0 +1,152 @@
+Index: frontend/src/components/enroll.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import React, { useState } from 'react';\nimport { useNavigate } from 'react-router-dom';\nimport {\n    Container, Box, Typography, TextField, Button, Paper,\n    RadioGroup, FormControlLabel, Radio, FormControl, FormLabel,\n    Alert, CircularProgress, Card, CardMedia\n} from '@mui/material';\nimport {\n    CloudUpload as CloudUploadIcon,\n    AutoAwesome as AutoAwesomeIcon,\n    Save as SaveIcon\n} from '@mui/icons-material';\nimport { createTheme, ThemeProvider } from \"@mui/material/styles\";\nimport axios from 'axios';\n\nconst theme = createTheme({\n    palette: {\n        primary: { main: \"#AED581\" },\n        secondary: { main: '#CDDC39' },\n    },\n});\n\nfunction Enroll() {\n    const navigate = useNavigate();\n\n    const [formData, setFormData] = useState({\n        title: '',\n        content: '',\n        coverImageType: 'upload', // 'upload' or 'ai'\n    });\n\n    const [uploadedImage, setUploadedImage] = useState(null);\n    const [aiPrompt, setAiPrompt] = useState('');\n    const [apiKey, setApiKey] = useState('');\n    const [previewImage, setPreviewImage] = useState(null);\n    const [aiImageConfirmed, setAiImageConfirmed] = useState(false);\n\n    const [loading, setLoading] = useState(false);\n    const [aiGenerating, setAiGenerating] = useState(false);\n    const [error, setError] = useState('');\n    const [success, setSuccess] = useState('');\n\n    const handleInputChange = (e) => {\n        const { name, value } = e.target;\n        setFormData(prev => ({ ...prev, [name]: value }));\n\n        if (name === 'coverImageType') {\n            setError('');\n            setSuccess('');\n            setPreviewImage(null);\n            setUploadedImage(null);\n            setAiPrompt('');\n            setAiImageConfirmed(false);\n        }\n    };\n\n    const handleImageUpload = (e) => {\n        const file = e.target.files[0];\n        if (file) {\n            if (file.size > 5 * 1024 * 1024) {\n                setError('이미지 크기는 5MB를 초과할 수 없습니다.');\n                return;\n            }\n            setUploadedImage(file);\n            const reader = new FileReader();\n            reader.onloadend = () => setPreviewImage(reader.result);\n            reader.readAsDataURL(file);\n            setError('');\n            setAiImageConfirmed(false);\n        }\n    };\n\n    // AI 표지 생성\n    const handleGenerateAI = async () => {\n        if (!aiPrompt.trim() || !apiKey.trim()) {\n            setError('API Key와 프롬프트를 모두 입력해주세요.');\n            return;\n        }\n\n        setAiGenerating(true);\n        setError('');\n        setSuccess('');\n        setAiImageConfirmed(false);\n\n        try {\n            const response = await fetch('https://api.openai.com/v1/images/generations', {\n                method: 'POST',\n                headers: {\n                    'Content-Type': 'application/json',\n                    'Authorization': `Bearer ${apiKey}`,\n                },\n                body: JSON.stringify({\n                    prompt: aiPrompt,\n                    n: 1,\n                    size: \"512x512\",\n                }),\n            });\n\n            if (!response.ok) {\n                const errData = await response.json();\n                throw new Error(errData.error?.message || '이미지 생성 실패');\n            }\n\n            const data = await response.json();\n            const url = data.data[0].url;\n\n            setPreviewImage(url);\n            setSuccess('AI 표지가 생성되었습니다. 이미지를 사용하거나 다시 생성할 수 있습니다.');\n        } catch (err) {\n            console.error(err);\n            setError(err.message || 'AI 이미지 생성 중 오류가 발생했습니다.');\n        } finally {\n            setAiGenerating(false);\n        }\n    };\n\n    const handleConfirmAiImage = () => {\n        if (!previewImage) {\n            setError('먼저 AI 표지를 생성해주세요.');\n            return;\n        }\n        setAiImageConfirmed(true);\n        setError('');\n        setSuccess('이 AI 이미지를 사용합니다. 도서 등록을 진행해주세요.');\n    };\n\n    const handleRegenerateAiImage = async () => {\n        setAiImageConfirmed(false);\n        setSuccess('');\n        setError('');\n        await handleGenerateAI(); \n    };\n\n\n    const handleSubmit = async (e) => {\n        e.preventDefault();\n\n        if (!formData.title.trim() || !formData.content.trim()) {\n            setError('제목과 내용을 입력해주세요.');\n            return;\n        }\n\n        if (formData.coverImageType === 'upload' && !uploadedImage) {\n            setError('표지 이미지를 업로드해주세요.');\n            return;\n        }\n\n        if (formData.coverImageType === 'ai') {\n            if (!previewImage) {\n                setError('AI 표지를 먼저 생성해주세요.');\n                return;\n            }\n            if (!aiImageConfirmed) {\n                setError('생성된 AI 표지를 사용할지 선택해주세요. \"이 이미지 사용하기\" 버튼을 눌러주세요.');\n                return;\n            }\n        }\n\n        setLoading(true);\n        setError('');\n        setSuccess('');\n\n        try {\n            const formDataToSend = new FormData();\n            formDataToSend.append('title', formData.title);\n            formDataToSend.append('content', formData.content);\n\n            if (formData.coverImageType === 'upload' && uploadedImage) {\n                // 업로드한 파일은 coverImage로 전송 → 백엔드가 저장 후 coverImageUrl 세팅\n                formDataToSend.append('coverImage', uploadedImage);\n            } else if (formData.coverImageType === 'ai' && previewImage) {\n                // AI 이미지 URL을 그대로 coverImageUrl 필드에 담아서 전송\n                formDataToSend.append('coverImageUrl', previewImage);\n            }\n\n            console.log('전송 데이터 :', {\n                title: formData.title,\n                content: formData.content,\n                coverType: formData.coverImageType,\n                coverImageUrl: formData.coverImageType === 'ai'\n                    ? previewImage\n                    : '(업로드 파일 사용)',\n            });\n\n            const response = await axios.post('/api/books', formDataToSend, {\n                headers: { 'Content-Type': 'multipart/form-data' },\n            });\n\n            if (response.data && response.data.id) {\n                setSuccess('도서가 성공적으로 등록되었습니다!');\n                setTimeout(() => navigate('/MainPage'), 1500);\n                return;\n            }\n\n            setSuccess('테스트 완료');\n        } catch (err) {\n            console.error('도서 등록 오류:', err);\n            setError(err.message || '도서 등록 중 오류가 발생했습니다.');\n        } finally {\n            setLoading(false);\n        }\n    };\n\n    return (\n        <ThemeProvider theme={theme}>\n            <Box sx={{ backgroundColor: \"#F3FDE9\", minHeight: '100vh', pb: 5 }}>\n                <Container maxWidth=\"md\" sx={{ py: 4 }}>\n                    <Paper elevation={3} sx={{ p: 4 }}>\n                        <Typography variant=\"h4\" component=\"h1\" gutterBottom align=\"center\">\n                            신규 도서 등록\n                        </Typography>\n\n                        {error && <Alert severity=\"error\" sx={{ mb: 2 }}>{error}</Alert>}\n                        {success && <Alert severity=\"success\" sx={{ mb: 2 }}>{success}</Alert>}\n\n                        <Box component=\"form\" onSubmit={handleSubmit} sx={{ mt: 3 }}>\n                            <TextField\n                                fullWidth\n                                label=\"제목\"\n                                name=\"title\"\n                                value={formData.title}\n                                onChange={handleInputChange}\n                                required\n                                margin=\"normal\"\n                            />\n                            <TextField\n                                fullWidth\n                                label=\"내용\"\n                                name=\"content\"\n                                value={formData.content}\n                                onChange={handleInputChange}\n                                required\n                                margin=\"normal\"\n                                multiline\n                                rows={6}\n                            />\n\n                            <FormControl component=\"fieldset\" sx={{ mt: 3, mb: 2 }}>\n                                <FormLabel component=\"legend\">표지 이미지 선택 방식</FormLabel>\n                                <RadioGroup\n                                    row\n                                    name=\"coverImageType\"\n                                    value={formData.coverImageType}\n                                    onChange={handleInputChange}\n                                >\n                                    <FormControlLabel value=\"upload\" control={<Radio />} label=\"직접 업로드\" />\n                                    <FormControlLabel value=\"ai\" control={<Radio />} label=\"AI 생성\" />\n                                </RadioGroup>\n                            </FormControl>\n\n                            {formData.coverImageType === 'upload' && (\n                                <Box sx={{ mt: 2 }}>\n                                    <Button\n                                        variant=\"outlined\"\n                                        component=\"label\"\n                                        startIcon={<CloudUploadIcon />}\n                                        fullWidth\n                                    >\n                                        이미지 업로드\n                                        <input\n                                            type=\"file\"\n                                            hidden\n                                            accept=\"image/*\"\n                                            onChange={handleImageUpload}\n                                        />\n                                    </Button>\n                                    {uploadedImage && (\n                                        <Typography variant=\"body2\" sx={{ mt: 1 }}>\n                                            {uploadedImage.name}\n                                        </Typography>\n                                    )}\n                                </Box>\n                            )}\n\n                            {formData.coverImageType === 'ai' && (\n                                <Box sx={{ mt: 2 }}>\n                                    <TextField\n                                        fullWidth\n                                        label=\"OpenAI API Key\"\n                                        type=\"password\"\n                                        value={apiKey}\n                                        onChange={(e) => setApiKey(e.target.value)}\n                                        margin=\"normal\"\n                                    />\n                                    <TextField\n                                        fullWidth\n                                        label=\"AI 표지 프롬프트\"\n                                        value={aiPrompt}\n                                        onChange={(e) => setAiPrompt(e.target.value)}\n                                        margin=\"normal\"\n                                    />\n                                    <Button\n                                        variant=\"outlined\"\n                                        startIcon={aiGenerating ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}\n                                        onClick={handleGenerateAI}\n                                        disabled={aiGenerating || !aiPrompt.trim() || !apiKey.trim()}\n                                        fullWidth\n                                        sx={{ mt: 1 }}\n                                    >\n                                        {aiGenerating ? 'AI 표지 생성 중...' : 'AI 표지 생성'}\n                                    </Button>\n                                </Box>\n                            )}\n\n                            {previewImage && (\n                                <Card sx={{ mt: 3, maxWidth: 400, mx: 'auto', p: 1 }}>\n                                    <CardMedia\n                                        component=\"img\"\n                                        image={previewImage}\n                                        alt=\"표지 미리보기\"\n                                        sx={{ height: 300, objectFit: 'cover' }}\n                                    />\n                                    <Typography\n                                        variant=\"caption\"\n                                        sx={{ p: 1, display: 'block', textAlign: 'center' }}\n                                    >\n                                        표지 미리보기\n                                    </Typography>\n\n                                    {formData.coverImageType === 'ai' && (\n                                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>\n                                            <Button\n                                                variant=\"contained\"\n                                                color=\"primary\"\n                                                fullWidth\n                                                onClick={handleConfirmAiImage}\n                                            >\n                                                이 이미지 사용하기\n                                            </Button>\n                                            <Button\n                                                variant=\"outlined\"\n                                                color=\"secondary\"\n                                                fullWidth\n                                                onClick={handleRegenerateAiImage}\n                                            >\n                                                이미지 재생성\n                                            </Button>\n                                        </Box>\n                                    )}\n                                </Card>\n                            )}\n\n                            <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>\n                                <Button\n                                    type=\"submit\"\n                                    variant=\"contained\"\n                                    size=\"large\"\n                                    fullWidth\n                                    startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}\n                                    disabled={loading}\n                                >\n                                    {loading ? '등록 중...' : '도서 등록'}\n                                </Button>\n                                <Button\n                                    variant=\"outlined\"\n                                    size=\"large\"\n                                    fullWidth\n                                    onClick={() => navigate('/MainPage')}\n                                    disabled={loading}\n                                >\n                                    취소\n                                </Button>\n                            </Box>\n                        </Box>\n                    </Paper>\n                </Container>\n            </Box>\n        </ThemeProvider>\n    );\n}\n\nexport default Enroll;
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/enroll.jsx b/frontend/src/components/enroll.jsx
+--- a/frontend/src/components/enroll.jsx	(revision 840010fd2f3c12d0314a04ec42f21f65dd709447)
++++ b/frontend/src/components/enroll.jsx	(date 1765256166130)
+@@ -182,7 +182,7 @@
+                     : '(업로드 파일 사용)',
+             });
+ 
+-            const response = await axios.post('/api/books', formDataToSend, {
++            const response = await axios.post('http://localhost:8080/api/books', formDataToSend, {
+                 headers: { 'Content-Type': 'multipart/form-data' },
+             });
+ 
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AutoImportSettings\">\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\n  </component>\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"36e743d5-6370-4a9d-9808-00ac3fcb5350\" name=\"변경\" comment=\"\">\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/frontend/src/App.jsx\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/frontend/src/App.jsx\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/frontend/src/components/InfoComment.jsx\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/frontend/src/components/InfoComment.jsx\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/frontend/src/components/InfoDetail.jsx\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/frontend/src/components/InfoDetail.jsx\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/frontend/src/components/InfoTopbar.jsx\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/frontend/src/components/InfoTopbar.jsx\" afterDir=\"false\" />\n    </list>\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"FileTemplateManagerImpl\">\n    <option name=\"RECENT_TEMPLATES\">\n      <list>\n        <option value=\"package.json\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\n      <map>\n        <entry key=\"$PROJECT_DIR$\" value=\"HDY\" />\n      </map>\n    </option>\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n    <option name=\"RESET_MODE\" value=\"HARD\" />\n  </component>\n  <component name=\"GitHubPullRequestSearchHistory\">{\n  &quot;lastFilter&quot;: {\n    &quot;state&quot;: &quot;OPEN&quot;,\n    &quot;assignee&quot;: &quot;HDYee&quot;\n  }\n}</component>\n  <component name=\"GithubPullRequestsUISettings\">{\n  &quot;selectedUrlAndAccountId&quot;: {\n    &quot;url&quot;: &quot;https://github.com/sprintmonster/book_management.git&quot;,\n    &quot;accountId&quot;: &quot;acd18a2a-e62b-4a93-b570-cdaa7eeccfc5&quot;\n  }\n}</component>\n  <component name=\"ProjectColorInfo\">{\n  &quot;associatedIndex&quot;: 6\n}</component>\n  <component name=\"ProjectId\" id=\"36YsEUOfYjNAOisKYxAgqxNeGr0\" />\n  <component name=\"ProjectLevelVcsManager\">\n    <ConfirmationsSetting value=\"1\" id=\"Add\" />\n  </component>\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\"><![CDATA[{\n  \"keyToString\": {\n    \"Node.js.InfoTopbar.jsx.executor\": \"Run\",\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\n    \"RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252\": \"true\",\n    \"RunOnceActivity.git.unshallow\": \"true\",\n    \"com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1\": \"true\",\n    \"git-widget-placeholder\": \"info__api__fixed\",\n    \"junie.onboarding.icon.badge.shown\": \"true\",\n    \"node.js.detected.package.eslint\": \"true\",\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\n    \"nodejs_package_manager_path\": \"npm\",\n    \"npm.dev.executor\": \"Run\",\n    \"to.speed.mode.migration.done\": \"true\",\n    \"ts.external.directory.path\": \"C:\\\\Program Files\\\\JetBrains\\\\WebStorm 2025.2.5\\\\plugins\\\\javascript-plugin\\\\jsLanguageServicesImpl\\\\external\",\n    \"vue.rearranger.settings.migration\": \"true\"\n  }\n}]]></component>\n  <component name=\"RunManager\">\n    <configuration name=\"dev\" type=\"js.build_tools.npm\" nameIsGenerated=\"true\">\n      <package-json value=\"$PROJECT_DIR$/frontend/src/package.json\" />\n      <command value=\"run\" />\n      <scripts>\n        <script value=\"dev\" />\n      </scripts>\n      <node-interpreter value=\"project\" />\n      <envs />\n      <method v=\"2\" />\n    </configuration>\n  </component>\n  <component name=\"SharedIndexes\">\n    <attachedChunks>\n      <set>\n        <option value=\"bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10\" />\n      </set>\n    </attachedChunks>\n  </component>\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"디폴트 작업\">\n      <changelist id=\"36e743d5-6370-4a9d-9808-00ac3fcb5350\" name=\"변경\" comment=\"\" />\n      <created>1765194751713</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1765194751713</updated>\n      <workItem from=\"1765194753302\" duration=\"5066000\" />\n    </task>\n    <servers />\n  </component>\n  <component name=\"TypeScriptGeneratedFilesManager\">\n    <option name=\"version\" value=\"3\" />\n    <option name=\"exactExcludedFiles\">\n      <list>\n        <option value=\"$PROJECT_DIR$/frontend/vite.config.js\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Vcs.Log.Tabs.Properties\">\n    <option name=\"TAB_STATES\">\n      <map>\n        <entry key=\"MAIN\">\n          <value>\n            <State>\n              <option name=\"FILTERS\">\n                <map>\n                  <entry key=\"branch\">\n                    <value>\n                      <list>\n                        <option value=\"frontend1\" />\n                      </list>\n                    </value>\n                  </entry>\n                </map>\n              </option>\n            </State>\n          </value>\n        </entry>\n      </map>\n    </option>\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 840010fd2f3c12d0314a04ec42f21f65dd709447)
++++ b/.idea/workspace.xml	(date 1765257973803)
+@@ -26,11 +26,9 @@
+   <component name="Git.Settings">
+     <option name="RECENT_BRANCH_BY_REPOSITORY">
+       <map>
+-        <entry key="$PROJECT_DIR$" value="HDY" />
++        <entry key="$PROJECT_DIR$" value="840010fd2f3c12d0314a04ec42f21f65dd709447" />
+       </map>
+     </option>
+-  </component>
+-  <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+     <option name="RESET_MODE" value="HARD" />
+   </component>
+@@ -60,11 +58,16 @@
+   <component name="PropertiesComponent"><![CDATA[{
+   "keyToString": {
+     "Node.js.InfoTopbar.jsx.executor": "Run",
++    "RequestMappingsPanelOrder0": "0",
++    "RequestMappingsPanelOrder1": "1",
++    "RequestMappingsPanelWidth0": "75",
++    "RequestMappingsPanelWidth1": "75",
+     "RunOnceActivity.ShowReadmeOnStart": "true",
+     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+     "RunOnceActivity.git.unshallow": "true",
++    "Spring Boot.DemoApplication.executor": "Run",
+     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+-    "git-widget-placeholder": "info__api__fixed",
++    "git-widget-placeholder": "840010fd",
+     "junie.onboarding.icon.badge.shown": "true",
+     "node.js.detected.package.eslint": "true",
+     "node.js.selected.package.eslint": "(autodetect)",
+@@ -72,11 +75,24 @@
+     "nodejs_package_manager_path": "npm",
+     "npm.dev.executor": "Run",
+     "to.speed.mode.migration.done": "true",
+-    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\WebStorm 2025.2.5\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
++    "ts.external.directory.path": "/Applications/IntelliJ IDEA.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+     "vue.rearranger.settings.migration": "true"
+   }
+ }]]></component>
+-  <component name="RunManager">
++  <component name="RunManager" selected="Spring Boot.DemoApplication">
++    <configuration name="DemoApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" temporary="true" nameIsGenerated="true">
++      <module name="demo.main" />
++      <option name="SPRING_BOOT_MAIN_CLASS" value="com.kt_miniproject.demo.DemoApplication" />
++      <extension name="coverage">
++        <pattern>
++          <option name="PATTERN" value="com.kt_miniproject.demo.*" />
++          <option name="ENABLED" value="true" />
++        </pattern>
++      </extension>
++      <method v="2">
++        <option name="Make" enabled="true" />
++      </method>
++    </configuration>
+     <configuration name="dev" type="js.build_tools.npm" nameIsGenerated="true">
+       <package-json value="$PROJECT_DIR$/frontend/src/package.json" />
+       <command value="run" />
+@@ -87,6 +103,19 @@
+       <envs />
+       <method v="2" />
+     </configuration>
++    <list>
++      <item itemvalue="npm.dev" />
++      <item itemvalue="Spring Boot.DemoApplication" />
++    </list>
++    <recent_temporary>
++      <list>
++        <item itemvalue="Spring Boot.DemoApplication" />
++        <item itemvalue="Spring Boot.DemoApplication" />
++        <item itemvalue="Spring Boot.DemoApplication" />
++        <item itemvalue="Spring Boot.DemoApplication" />
++        <item itemvalue="Spring Boot.DemoApplication" />
++      </list>
++    </recent_temporary>
+   </component>
+   <component name="SharedIndexes">
+     <attachedChunks>
+@@ -104,6 +133,15 @@
+       <updated>1765194751713</updated>
+       <workItem from="1765194753302" duration="5066000" />
+     </task>
++    <task id="LOCAL-00001" summary="아이디 비번 찾기 api 정의서대로">
++      <option name="closed" value="true" />
++      <created>1765254369569</created>
++      <option name="number" value="00001" />
++      <option name="presentableId" value="LOCAL-00001" />
++      <option name="project" value="LOCAL" />
++      <updated>1765254369569</updated>
++    </task>
++    <option name="localTasksCounter" value="2" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+@@ -137,4 +175,8 @@
+       </map>
+     </option>
+   </component>
++  <component name="VcsManagerConfiguration">
++    <MESSAGE value="아이디 비번 찾기 api 정의서대로" />
++    <option name="LAST_COMMIT_MESSAGE" value="아이디 비번 찾기 api 정의서대로" />
++  </component>
+ </project>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ProjectRootManager\">\r\n    <output url=\"file://$PROJECT_DIR$/out\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision 840010fd2f3c12d0314a04ec42f21f65dd709447)
++++ b/.idea/misc.xml	(date 1765254349790)
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+-  <component name="ProjectRootManager">
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_25" project-jdk-name="temurin-17" project-jdk-type="JavaSDK">
+     <output url="file://$PROJECT_DIR$/out" />
+   </component>
+ </project>
+\ No newline at end of file

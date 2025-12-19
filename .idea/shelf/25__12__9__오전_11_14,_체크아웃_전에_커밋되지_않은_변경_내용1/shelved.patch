@@ -1,0 +1,162 @@
+Index: backend/demo/src/main/java/com/kt_miniproject/demo/controller/UserController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.kt_miniproject.demo.controller;\n\nimport com.kt_miniproject.demo.domain.user.User;\nimport com.kt_miniproject.demo.dto.user.LoginRequest;\nimport com.kt_miniproject.demo.dto.user.UserResponse;\nimport com.kt_miniproject.demo.repository.UserRepository;\nimport com.kt_miniproject.demo.service.UserService;\nimport jakarta.servlet.http.HttpSession;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.http.ResponseEntity;\nimport org.springframework.web.bind.annotation.*;\n\nimport java.util.List;\n\n@RestController\n@RequestMapping(\"/api/users\")   // ★ /api/users 로 통일\n@RequiredArgsConstructor\npublic class UserController {\n\n    private final UserService userService;\n    private final UserRepository userRepository;\n\n    // 1. 유저 생성\n    @PostMapping\n    public ResponseEntity<User> createUser(@RequestBody User user) {\n        User saved = userRepository.save(user);\n        return ResponseEntity.ok(saved);\n    }\n\n    // 2. 유저 조회\n    @GetMapping(\"/{id}\")\n    public ResponseEntity<User> getUser(@PathVariable Long id) {\n        User user = userRepository.findById(id)\n                .orElseThrow(() -> new IllegalArgumentException(\"사용자를 찾을 수 없습니다.\"));\n        return ResponseEntity.ok(user);\n    }\n\n    // 1. 로그인 (POST)\n    @PostMapping(\"/login\")\n    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest request, HttpSession session) {\n        UserResponse loginUser = userService.login(request);\n\n        // 세션에 회원 정보 저장 (서버가 \"이 사람 로그인했음\" 하고 기억표를 줌)\n        session.setAttribute(\"loginUser\", loginUser);\n\n        return ResponseEntity.ok(loginUser);\n    }\n\n    // 2. 로그아웃 (POST) - 서비스 안 가고 여기서 끝냄\n    @PostMapping(\"/logout\")\n    public ResponseEntity<String> logout(HttpSession session) {\n        session.invalidate(); // 세션 폭파 (기억표 삭제)\n        return ResponseEntity.ok(\"로그아웃 되었습니다.\");\n    }\n\n    // 3. 아이디 찾기 (GET) - 쿼리 파라미터 사용 (?name=홍길동)\n    @GetMapping(\"/find-email\")\n    public ResponseEntity<Object> findEmail(@RequestParam String name) {\n        List<String> email = userService.findEmail(name);\n        return ResponseEntity.ok(\"찾으시는 이메일: \" + email);\n    }\n\n    // 4. 비밀번호 찾기 (GET) - (?email=a@a.com&name=홍길동)\n    @GetMapping(\"/find-password\")\n    public ResponseEntity<String> findPassword(@RequestParam String email, @RequestParam String name) {\n        String password = userService.findPassword(email, name);\n        return ResponseEntity.ok(\"비밀번호는: \" + password);\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/demo/src/main/java/com/kt_miniproject/demo/controller/UserController.java b/backend/demo/src/main/java/com/kt_miniproject/demo/controller/UserController.java
+--- a/backend/demo/src/main/java/com/kt_miniproject/demo/controller/UserController.java	(revision cf052e0dc04ccbd46997af0da60bfe203f1003d8)
++++ b/backend/demo/src/main/java/com/kt_miniproject/demo/controller/UserController.java	(date 1765244530778)
+@@ -54,14 +54,14 @@
+     }
+ 
+     // 3. 아이디 찾기 (GET) - 쿼리 파라미터 사용 (?name=홍길동)
+-    @GetMapping("/find-email")
++    @GetMapping("/modify")
+     public ResponseEntity<Object> findEmail(@RequestParam String name) {
+         List<String> email = userService.findEmail(name);
+         return ResponseEntity.ok("찾으시는 이메일: " + email);
+     }
+ 
+     // 4. 비밀번호 찾기 (GET) - (?email=a@a.com&name=홍길동)
+-    @GetMapping("/find-password")
++    @GetMapping("/modify")
+     public ResponseEntity<String> findPassword(@RequestParam String email, @RequestParam String name) {
+         String password = userService.findPassword(email, name);
+         return ResponseEntity.ok("비밀번호는: " + password);
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AutoImportSettings\">\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\n  </component>\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"36e743d5-6370-4a9d-9808-00ac3fcb5350\" name=\"변경\" comment=\"\" />\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"FileTemplateManagerImpl\">\n    <option name=\"RECENT_TEMPLATES\">\n      <list>\n        <option value=\"package.json\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n  </component>\n  <component name=\"GitHubPullRequestSearchHistory\"><![CDATA[{\n  \"lastFilter\": {\n    \"state\": \"OPEN\",\n    \"assignee\": \"HDYee\"\n  }\n}]]></component>\n  <component name=\"GithubPullRequestsUISettings\"><![CDATA[{\n  \"selectedUrlAndAccountId\": {\n    \"url\": \"https://github.com/sprintmonster/book_management.git\",\n    \"accountId\": \"acd18a2a-e62b-4a93-b570-cdaa7eeccfc5\"\n  }\n}]]></component>\n  <component name=\"ProjectColorInfo\"><![CDATA[{\n  \"associatedIndex\": 6\n}]]></component>\n  <component name=\"ProjectId\" id=\"36YsEUOfYjNAOisKYxAgqxNeGr0\" />\n  <component name=\"ProjectLevelVcsManager\">\n    <ConfirmationsSetting value=\"1\" id=\"Add\" />\n  </component>\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\"><![CDATA[{\n  \"keyToString\": {\n    \"Node.js.InfoTopbar.jsx.executor\": \"Run\",\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\n    \"RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252\": \"true\",\n    \"RunOnceActivity.git.unshallow\": \"true\",\n    \"com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1\": \"true\",\n    \"git-widget-placeholder\": \"HDY\",\n    \"junie.onboarding.icon.badge.shown\": \"true\",\n    \"node.js.detected.package.eslint\": \"true\",\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\n    \"nodejs_package_manager_path\": \"npm\",\n    \"npm.dev.executor\": \"Run\",\n    \"to.speed.mode.migration.done\": \"true\",\n    \"ts.external.directory.path\": \"C:\\\\Program Files\\\\JetBrains\\\\WebStorm 2025.2.5\\\\plugins\\\\javascript-plugin\\\\jsLanguageServicesImpl\\\\external\",\n    \"vue.rearranger.settings.migration\": \"true\"\n  }\n}]]></component>\n  <component name=\"RunManager\">\n    <configuration name=\"dev\" type=\"js.build_tools.npm\" nameIsGenerated=\"true\">\n      <package-json value=\"$PROJECT_DIR$/frontend/src/package.json\" />\n      <command value=\"run\" />\n      <scripts>\n        <script value=\"dev\" />\n      </scripts>\n      <node-interpreter value=\"project\" />\n      <envs />\n      <method v=\"2\" />\n    </configuration>\n  </component>\n  <component name=\"SharedIndexes\">\n    <attachedChunks>\n      <set>\n        <option value=\"bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10\" />\n      </set>\n    </attachedChunks>\n  </component>\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"디폴트 작업\">\n      <changelist id=\"36e743d5-6370-4a9d-9808-00ac3fcb5350\" name=\"변경\" comment=\"\" />\n      <created>1765194751713</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1765194751713</updated>\n      <workItem from=\"1765194753302\" duration=\"5066000\" />\n    </task>\n    <servers />\n  </component>\n  <component name=\"TypeScriptGeneratedFilesManager\">\n    <option name=\"version\" value=\"3\" />\n    <option name=\"exactExcludedFiles\">\n      <list>\n        <option value=\"$PROJECT_DIR$/frontend/vite.config.js\" />\n      </list>\n    </option>\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision cf052e0dc04ccbd46997af0da60bfe203f1003d8)
++++ b/.idea/workspace.xml	(date 1765246368686)
+@@ -18,23 +18,28 @@
+     </option>
+   </component>
+   <component name="Git.Settings">
++    <option name="RECENT_BRANCH_BY_REPOSITORY">
++      <map>
++        <entry key="$PROJECT_DIR$" value="cf052e0dc04ccbd46997af0da60bfe203f1003d8" />
++      </map>
++    </option>
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+   </component>
+-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+-  "lastFilter": {
+-    "state": "OPEN",
+-    "assignee": "HDYee"
++  <component name="GitHubPullRequestSearchHistory">{
++  &quot;lastFilter&quot;: {
++    &quot;state&quot;: &quot;OPEN&quot;,
++    &quot;assignee&quot;: &quot;HDYee&quot;
+   }
+-}]]></component>
++}</component>
+   <component name="GithubPullRequestsUISettings"><![CDATA[{
+   "selectedUrlAndAccountId": {
+     "url": "https://github.com/sprintmonster/book_management.git",
+-    "accountId": "acd18a2a-e62b-4a93-b570-cdaa7eeccfc5"
++    "accountId": "f8898d12-e6ff-4410-942d-9abc5eb1a03a"
+   }
+ }]]></component>
+-  <component name="ProjectColorInfo"><![CDATA[{
+-  "associatedIndex": 6
+-}]]></component>
++  <component name="ProjectColorInfo">{
++  &quot;associatedIndex&quot;: 6
++}</component>
+   <component name="ProjectId" id="36YsEUOfYjNAOisKYxAgqxNeGr0" />
+   <component name="ProjectLevelVcsManager">
+     <ConfirmationsSetting value="1" id="Add" />
+@@ -46,12 +51,19 @@
+   <component name="PropertiesComponent"><![CDATA[{
+   "keyToString": {
+     "Node.js.InfoTopbar.jsx.executor": "Run",
++    "RequestMappingsPanelOrder0": "0",
++    "RequestMappingsPanelOrder1": "1",
++    "RequestMappingsPanelWidth0": "75",
++    "RequestMappingsPanelWidth1": "75",
+     "RunOnceActivity.ShowReadmeOnStart": "true",
+     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+     "RunOnceActivity.git.unshallow": "true",
++    "Spring Boot.DemoApplication.executor": "Run",
+     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+-    "git-widget-placeholder": "HDY",
++    "git-widget-placeholder": "cf052e0d",
+     "junie.onboarding.icon.badge.shown": "true",
++    "kotlin-language-version-configured": "true",
++    "last_opened_file_path": "/Users/User/Desktop/coding/5555/book_management",
+     "node.js.detected.package.eslint": "true",
+     "node.js.selected.package.eslint": "(autodetect)",
+     "node.js.selected.package.tslint": "(autodetect)",
+@@ -62,7 +74,20 @@
+     "vue.rearranger.settings.migration": "true"
+   }
+ }]]></component>
+-  <component name="RunManager">
++  <component name="RunManager" selected="Spring Boot.DemoApplication">
++    <configuration name="DemoApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" temporary="true" nameIsGenerated="true">
++      <module name="demo.main" />
++      <option name="SPRING_BOOT_MAIN_CLASS" value="com.kt_miniproject.demo.DemoApplication" />
++      <extension name="coverage">
++        <pattern>
++          <option name="PATTERN" value="com.kt_miniproject.demo.*" />
++          <option name="ENABLED" value="true" />
++        </pattern>
++      </extension>
++      <method v="2">
++        <option name="Make" enabled="true" />
++      </method>
++    </configuration>
+     <configuration name="dev" type="js.build_tools.npm" nameIsGenerated="true">
+       <package-json value="$PROJECT_DIR$/frontend/src/package.json" />
+       <command value="run" />
+@@ -73,11 +98,17 @@
+       <envs />
+       <method v="2" />
+     </configuration>
++    <recent_temporary>
++      <list>
++        <item itemvalue="Spring Boot.DemoApplication" />
++      </list>
++    </recent_temporary>
+   </component>
+   <component name="SharedIndexes">
+     <attachedChunks>
+       <set>
+-        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
++        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.28238.7" />
++        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-IU-252.28238.7" />
+       </set>
+     </attachedChunks>
+   </component>
+@@ -89,6 +120,7 @@
+       <option name="presentableId" value="Default" />
+       <updated>1765194751713</updated>
+       <workItem from="1765194753302" duration="5066000" />
++      <workItem from="1765243812889" duration="2543000" />
+     </task>
+     <servers />
+   </component>
+@@ -100,4 +132,15 @@
+       </list>
+     </option>
+   </component>
++  <component name="Vcs.Log.Tabs.Properties">
++    <option name="TAB_STATES">
++      <map>
++        <entry key="MAIN">
++          <value>
++            <State />
++          </value>
++        </entry>
++      </map>
++    </option>
++  </component>
+ </project>
+\ No newline at end of file

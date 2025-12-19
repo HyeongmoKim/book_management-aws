@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal" created-in="IU-252.28238.7">
+    <data-source name="testes" uuid="a8977ae8-5172-4358-96db-b95cdbbfa474">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="H2" />
+      <user-name>dw</user-name>
+      <schema-mapping />
+    </data-source>
+    <data-source name="testes" uuid="89eb2746-76da-4d27-8459-e0f4e00989ef">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="H2" />
+      <user-name>dw</user-name>
+      <schema-mapping />
+    </data-source>
+  </component>
+</project>
