@@ -7,25 +7,31 @@ phases:
 
   pre_build:
     commands:
-      - echo "Listing source tree"
-      - ls -la
-      - echo "Searching for package.json..."
-      - FRONT_DIR=$(dirname "$(find . -maxdepth 4 -name package.json -print -quit)")
-      - echo "Detected frontend dir: $FRONT_DIR"
-      - cd "$FRONT_DIR"
+      - echo "Moving to frontend directory"
+      - cd frontend
 
+      - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/a084110-frontend
+
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/a084110-react
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
   build:
     commands:
+      - echo "Build started on $(date)"
       - npm ci
       - npm run build
+
+      - echo "Building Docker image"
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
+      - echo "Pushing Docker image"
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+
+      - echo "Deploying to EKS"
+      - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
+      - kubectl apply -f k8s/deployment.yaml
