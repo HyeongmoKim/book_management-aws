@@ -4,27 +4,34 @@ phases:
   install:
     runtime-versions:
       nodejs: 18
+
   pre_build:
     commands:
-      - echo "Moving to React directory"
-      - cd demo/frontend/react
+      - echo "Moving to frontend (Vite/React) directory"
+      - cd frontend
+
       - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/a084110-react
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
   build:
     commands:
       - echo "Build started on `date`"
-      - npm install
+      - npm ci
       - npm run build
+
       - echo "Building the Docker image..."
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
   post_build:
     commands:
       - echo "Pushing the Docker image..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+
       - echo "Deploying to EKS..."
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
-      - kubectl apply -f k8s/deployment.yaml # 개발팀이 준비한 k8s 설정 파일 실행
+      - kubectl apply -f k8s/deployment.yaml
