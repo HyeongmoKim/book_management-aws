@@ -4,34 +4,41 @@ phases:
   install:
     runtime-versions:
       nodejs: 20
+    commands:
+      - echo "Searching for package.json and installing dependencies..."
+      # package.json이 있는 곳을 찾아 해당 폴더로 이동합니다.
+      - |
+        PACKAGE_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
+        echo "Moving to: $PACKAGE_DIR"
+        cd "$PACKAGE_DIR"
+        npm ci
 
   pre_build:
     commands:
-      - echo "Finding frontend directory (package.json)..."
-      - FRONT_DIR=$(dirname "$(find . -maxdepth 4 -name package.json -print -quit)")
-      - echo "Frontend directory detected: $FRONT_DIR"
-      - cd "$FRONT_DIR"
-
       - echo "Logging in to Amazon ECR..."
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION \
-        | docker login --username AWS --password-stdin \
-        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/a084110-react
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
-      - echo "Build started on $(date)"
-      - npm ci
-      - npm run build
-
-      - echo "Building Docker image"
+      - echo "Build started..."
+      # 빌드 시점에도 다시 package.json 위치로 이동합니다.
+      - |
+        PACKAGE_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
+        cd "$PACKAGE_DIR"
+        npm run build
+      
+      - echo "Building the Docker image..."
+      # Dockerfile도 같은 위치에 있다고 가정합니다.
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo "Pushing Docker image"
+      - echo "Pushing the Docker image..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Deploying to EKS..."
+      # k8s 폴더는 프로젝트 전체 루트에 있으므로 처음 소스 경로로 돌아가 실행합니다.
+      - cd $CODEBUILD_SRC_DIR
+      - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
+      - kubectl apply -f k8s/deployment.yaml
