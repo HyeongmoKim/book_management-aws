@@ -5,16 +5,11 @@ phases:
     runtime-versions:
       nodejs: 18
 
-  pre_build:
-    commands:
-      - echo "Moving to frontend directory"
-      - cd frontend
-
-      - echo "Logging in to Amazon ECR..."
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/a084110-frontend
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+pre_build:
+  commands:
+    - echo $AWS_DEFAULT_REGION
+    - echo $AWS_ACCOUNT_ID
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login ...
 
   build:
     commands:
