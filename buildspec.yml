@@ -1,6 +1,31 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+
   pre_build:
     commands:
-      - echo "SRC DIR: $CODEBUILD_SRC_DIR"
+      - echo "Listing source tree"
       - ls -la
-      - find . -maxdepth 3 -name package.json -print
-      - cd frontend
+      - echo "Searching for package.json..."
+      - FRONT_DIR=$(dirname "$(find . -maxdepth 4 -name package.json -print -quit)")
+      - echo "Detected frontend dir: $FRONT_DIR"
+      - cd "$FRONT_DIR"
+
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/a084110-frontend
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
+  build:
+    commands:
+      - npm ci
+      - npm run build
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
