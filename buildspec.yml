@@ -2,16 +2,27 @@ version: 0.2
 
 phases:
   install:
-    # 런타임 버전을 지정하여 Node.js와 npm 버전을 맞춥니다.
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Checking files..."
-      - ls -al  # package-lock.json이 실제로 있는지 로그로 강제 확인
-      - echo "Installing dependencies..."
-      # 버전 문제가 계속될 경우를 대비해 npm install로 변경하거나 설정을 추가합니다.
-      - npm install -g npm@latest  # npm을 최신으로 업데이트
-      - npm ci || npm install      # ci가 실패하면 install로 대체 실행 (안전장치)
+      - echo "Current directory status:"
+      - pwd
+      - ls -alR  # 모든 하위 폴더와 파일을 상세히 출력하여 파일 위치를 강제로 확인합니다.
+      
+      # 만약 파일이 루트에 없고 특정 폴더(예: frontend) 안에 있다면 해당 폴더로 이동하는 로직 추가
+      # 아래 예시는 파일이 발견되지 않을 경우를 대비해 '찾아서 이동'하는 안전장치입니다.
+      - |
+        if [ ! -f "package.json" ]; then
+          echo "package.json not found in root. Searching..."
+          TARGET_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
+          if [ -n "$TARGET_DIR" ]; then
+            echo "Moving to directory: $TARGET_DIR"
+            cd "$TARGET_DIR"
+          fi
+        fi
+      
+      - echo "Starting npm install..."
+      - npm install  # ci 대신 install을 사용하여 lock 파일 유무와 상관없이 진행 시도
 
   pre_build:
     commands:
