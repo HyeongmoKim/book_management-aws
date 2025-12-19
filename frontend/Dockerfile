@@ -1,5 +1,5 @@
 # 1단계: React 빌드
-FROM node:18 AS build
+FROM public.ecr.aws/nginx/nginx:alpine
 WORKDIR /app
 
 # 현재 위치의 src 폴더 안에 있는 package 파일을 복사합니다.
