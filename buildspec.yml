@@ -3,15 +3,19 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18
+      nodejs: 20
 
   pre_build:
     commands:
-      - echo "Moving to frontend directory"
-      - cd frontend
+      - echo "Finding frontend directory (package.json)..."
+      - FRONT_DIR=$(dirname "$(find . -maxdepth 4 -name package.json -print -quit)")
+      - echo "Frontend directory detected: $FRONT_DIR"
+      - cd "$FRONT_DIR"
 
       - echo "Logging in to Amazon ECR..."
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION \
+        | docker login --username AWS --password-stdin \
+        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/a084110-react
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
@@ -31,7 +35,3 @@ phases:
       - echo "Pushing Docker image"
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-
-      - echo "Deploying to EKS"
-      - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
-      - kubectl apply -f k8s/deployment.yaml
