@@ -3,22 +3,26 @@ version: 0.2
 phases:
   install:
     commands:
+      - echo "Installing dependencies..."
       - cd frontend
       - npm ci
 
-pre_build:
-  commands:
-    - echo $AWS_DEFAULT_REGION
-    - echo $AWS_ACCOUNT_ID
-    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login ...
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - echo $AWS_DEFAULT_REGION
+      - echo $AWS_ACCOUNT_ID
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
       - echo "Build started on `date`"
-      - npm ci
+      # 중요: 다시 frontend 폴더로 들어가서 빌드해야 합니다.
+      - cd frontend
       - npm run build
-
+      
       - echo "Building the Docker image..."
+      # Dockerfile이 frontend 폴더 안에 있다면 아래와 같이 실행
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
@@ -29,5 +33,7 @@ pre_build:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 
       - echo "Deploying to EKS..."
+      # 루트 폴더에 있는 k8s 설정을 사용하기 위해 다시 루트로 이동 (필요시)
+      - cd ..
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
       - kubectl apply -f k8s/deployment.yaml
