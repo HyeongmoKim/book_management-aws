@@ -5,26 +5,26 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Installing Frontend Dependencies..."
-      # 프론트엔드 폴더로 직접 이동합니다.
+      - echo "Installing dependencies in frontend/src..."
+      # 말씀하신 대로 package.json이 있는 위치로 이동합니다.
       - cd frontend/src
-      - npm ci
+      # ci 대신 install을 사용하여 버전 불일치 문제를 해결합니다.
+      - npm install
 
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
-      # 단계가 새로 시작되면 경로는 다시 루트로 초기화되므로 바로 실행 가능합니다.
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
       - echo "Build started on `date`"
-      # 반드시 다시 frontend 폴더로 이동해야 합니다.
       - cd frontend/src
       - npm run build
       
       - echo "Building the Docker image..."
-      # Dockerfile이 frontend 폴더 안에 있으므로 이 위치에서 빌드합니다.
+      # Dockerfile의 위치에 따라 아래 '.' 경로 확인이 필요합니다. 
+      # 만약 Dockerfile이 frontend 폴더에 있다면 'cd ..' 후 빌드해야 할 수 있습니다.
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
@@ -35,7 +35,7 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 
       - echo "Deploying to EKS..."
-      # k8s 폴더는 프로젝트 전체 루트에 있으므로 한 단계 밖으로 나갑니다.
-      - cd ..
+      # k8s 폴더는 프로젝트 최상위 루트에 있으므로 다시 루트로 이동합니다.
+      - cd $CODEBUILD_SRC_DIR
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
       - kubectl apply -f k8s/deployment.yaml
