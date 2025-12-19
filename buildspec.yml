@@ -5,42 +5,38 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Searching for package.json..."
-      # package.json이 있는 폴더를 자동으로 찾아 해당 위치로 이동합니다.
-      - |
-        PACKAGE_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
-        echo "Moving to directory: $PACKAGE_DIR"
-        cd "$PACKAGE_DIR"
+      - echo "Installing Frontend Dependencies..."
+      # 프론트엔드 폴더로 확실히 이동
+      - cd frontend
       - npm ci
 
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
-      # ECR 로그인은 항상 루트 수준에서 실행되도록 보장 (새 단계는 루트에서 시작함)
+      # 환경 변수로 등록한 AWS_ACCOUNT_ID를 사용하여 로그인
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
-      - echo "Build started..."
-      # 빌드 단계에서도 다시 파일 위치를 찾아 이동합니다.
-      - |
-        PACKAGE_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
-        cd "$PACKAGE_DIR"
+      - echo "Build started on `date`"
+      # 다시 frontend 폴더로 이동하여 빌드 실행
+      - cd frontend
       - npm run build
       
       - echo "Building the Docker image..."
-      # Dockerfile 위치 확인 (package.json과 같은 위치에 있다고 가정)
+      # Dockerfile이 frontend 폴더 안에 있으므로 그대로 빌드
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
       - echo "Pushing the Docker image..."
+      # 이미지가 성공적으로 빌드되어야만 푸시가 작동합니다.
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+
       - echo "Deploying to EKS..."
+      # k8s 폴더는 프로젝트 루트에 있으므로 한 단계 밖으로 나갑니다.
+      - cd ..
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
-      # k8s 폴더는 보통 루트에 있으므로 경로를 맞춰줍니다.
-      - |
-        cd $CODEBUILD_SRC_DIR
-        kubectl apply -f k8s/deployment.yaml
+      - kubectl apply -f k8s/deployment.yaml
