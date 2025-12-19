@@ -5,23 +5,31 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Moving to Frontend directory..."
-      - cd frontend
-      - npm ci  # 이제 폴더가 확실하므로 ci를 사용해도 됩니다.
+      - echo "Searching for package.json..."
+      # package.json이 있는 폴더를 자동으로 찾아 해당 위치로 이동합니다.
+      - |
+        PACKAGE_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
+        echo "Moving to directory: $PACKAGE_DIR"
+        cd "$PACKAGE_DIR"
+      - npm ci
 
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
-      # 루트가 아니므로 다시 루트로 나가거나, 그냥 실행 (pre_build 시작 시 경로는 다시 루트임)
+      # ECR 로그인은 항상 루트 수준에서 실행되도록 보장 (새 단계는 루트에서 시작함)
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
       - echo "Build started..."
-      - cd frontend
+      # 빌드 단계에서도 다시 파일 위치를 찾아 이동합니다.
+      - |
+        PACKAGE_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
+        cd "$PACKAGE_DIR"
       - npm run build
-      - echo "Building Docker image..."
-      # 이미지 구조상 Dockerfile이 frontend 폴더 안에 있으므로 여기서 실행
+      
+      - echo "Building the Docker image..."
+      # Dockerfile 위치 확인 (package.json과 같은 위치에 있다고 가정)
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
@@ -32,4 +40,7 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - echo "Deploying to EKS..."
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
-      - kubectl apply -f k8s/deployment.yaml
+      # k8s 폴더는 보통 루트에 있으므로 경로를 맞춰줍니다.
+      - |
+        cd $CODEBUILD_SRC_DIR
+        kubectl apply -f k8s/deployment.yaml
