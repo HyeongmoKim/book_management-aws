@@ -31,4 +31,5 @@ phases:
 
       - echo "Deploying to EKS..."
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
-      - kubectl apply -f k8s/deployment.yaml
+      - kubectl apply -f ../k8s/deployment.yaml
+      - kubectl apply -f ../k8s/service.yaml
