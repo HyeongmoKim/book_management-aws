@@ -6,12 +6,8 @@ phases:
       nodejs: 20
     commands:
       - echo "Installing dependencies..."
-      # package.json이 있는 곳을 찾아서 이동 후 설치
-      - |
-        TARGET_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | grep "frontend" | head -n 1 | xargs dirname)
-        echo "Found frontend package.json in: $TARGET_DIR"
-        cd "$TARGET_DIR"
-        npm install
+      - cd $CODEBUILD_SRC_DIR/frontend/src
+      - npm install
 
   pre_build:
     commands:
@@ -20,15 +16,13 @@ phases:
 
   build:
     commands:
-      - echo "Build started..."
-      # 빌드 단계에서도 다시 해당 폴더로 이동
-      - |
-        TARGET_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | grep "frontend" | head -n 1 | xargs dirname)
-        cd "$TARGET_DIR"
-        npm run build
+      - echo "Build started on `date`"
+      # 절대 경로를 사용하여 이동합니다.
+      - cd $CODEBUILD_SRC_DIR/frontend/src
+      - npm run build
       
       - echo "Building the Docker image..."
-      # Dockerfile이 있는 위치에서 빌드 (보통 package.json과 같은 위치)
+      # Dockerfile 위치에 주의하세요. 만약 frontend/src 안에 있다면 아래 명령어가 맞습니다.
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
@@ -38,6 +32,7 @@ phases:
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - echo "Deploying to EKS..."
+      # k8s 폴더는 루트에 있으므로 다시 소스 루트로 이동합니다.
       - cd $CODEBUILD_SRC_DIR
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
       - kubectl apply -f k8s/deployment.yaml
