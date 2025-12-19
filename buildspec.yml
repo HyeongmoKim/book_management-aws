@@ -7,7 +7,7 @@ phases:
     commands:
       - echo "Installing Frontend Dependencies..."
       # 프론트엔드 폴더로 직접 이동합니다.
-      - cd frontend
+      - cd frontend/src
       - npm ci
 
   pre_build:
@@ -20,7 +20,7 @@ phases:
     commands:
       - echo "Build started on `date`"
       # 반드시 다시 frontend 폴더로 이동해야 합니다.
-      - cd frontend
+      - cd frontend/src
       - npm run build
       
       - echo "Building the Docker image..."
