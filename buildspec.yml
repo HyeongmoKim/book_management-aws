@@ -6,9 +6,9 @@ phases:
       nodejs: 20
     commands:
       - echo "Installing dependencies in frontend/src..."
-      # 말씀하신 대로 package.json이 있는 위치로 이동합니다.
+      # package.json이 있는 위치로 이동
       - cd frontend/src
-      # ci 대신 install을 사용하여 버전 불일치 문제를 해결합니다.
+      # 버전 불일치 문제를 무시하고 설치하기 위해 ci 대신 install 사용
       - npm install
 
   pre_build:
@@ -23,8 +23,8 @@ phases:
       - npm run build
       
       - echo "Building the Docker image..."
-      # Dockerfile의 위치에 따라 아래 '.' 경로 확인이 필요합니다. 
-      # 만약 Dockerfile이 frontend 폴더에 있다면 'cd ..' 후 빌드해야 할 수 있습니다.
+      # Dockerfile이 frontend/src 안에 있다면 '.' 그대로 유지
+      # 만약 Dockerfile이 frontend 폴더(상위)에 있다면 'cd ..' 후 빌드해야 합니다.
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
@@ -35,7 +35,7 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 
       - echo "Deploying to EKS..."
-      # k8s 폴더는 프로젝트 최상위 루트에 있으므로 다시 루트로 이동합니다.
+      # k8s 폴더는 프로젝트 최상위 루트에 있으므로 다시 루트로 이동
       - cd $CODEBUILD_SRC_DIR
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
       - kubectl apply -f k8s/deployment.yaml
