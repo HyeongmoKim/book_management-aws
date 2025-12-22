@@ -13,16 +13,18 @@ phases:
     commands:
       - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      # 이미지 태그 변수 정의 (빌드 ID 활용)
+      - IMAGE_TAG=$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
 
   build:
     commands:
       - echo "Build started on `date`"
-      # 절대 경로를 사용하여 이동합니다.
       - cd $CODEBUILD_SRC_DIR/frontend/src
       - npm run build
       
       - echo "Building the Docker image..."
-      # Dockerfile 위치에 주의하세요. 만약 frontend/src 안에 있다면 아래 명령어가 맞습니다.
+      # 중요: Dockerfile이 있는 상위 폴더(frontend)로 이동합니다.
+      - cd ..
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
@@ -32,7 +34,6 @@ phases:
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - echo "Deploying to EKS..."
-      # k8s 폴더는 루트에 있으므로 다시 소스 루트로 이동합니다.
       - cd $CODEBUILD_SRC_DIR
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
       - kubectl apply -f k8s/front_deployment.yaml
