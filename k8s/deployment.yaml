@@ -18,18 +18,28 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        # 1. DB 연결 주소 (이미지의 프라이빗 IP 172.31.35.161 사용)
+        # 1. H2 접속 주소 (파일 모드: /app/data/testdb 파일에 저장됨)
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:mysql://172.31.35.161:3306/a084110?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=UTC"
+          value: "jdbc:h2:file:/app/data/testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE"
         
-        # 2. DB 사용자 계정 (이미지의 DB_USER=admin 사용)
+        # 2. H2 기본 계정 정보
         - name: SPRING_DATASOURCE_USERNAME
-          value: "admin"
-        
-        # 3. DB 비밀번호 (이미지의 DB_PASSWORD 사용)
+          value: "sa"
         - name: SPRING_DATASOURCE_PASSWORD
-          value: "비밀번호" # 실제 비밀번호 문구로 교체하세요
+          value: "" # H2 기본값은 비밀번호 없음
 
-        # JPA 설정 (필요시 추가)
+        # 3. H2 드라이버 명시
+        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+          value: "org.h2.Driver"
+
+        # 4. H2 전용 문법(Dialect) 설정
+        - name: SPRING_JPA_DATABASE_PLATFORM
+          value: "org.hibernate.dialect.H2Dialect"
+        
+        # 5. 테이블 자동 생성 및 H2 콘솔 활성화
         - name: SPRING_JPA_HIBERNATE_DDL_AUTO
           value: "update"
+        - name: SPRING_H2_CONSOLE_ENABLED
+          value: "true"
+        - name: SPRING_H2_CONSOLE_PATH
+          value: "/h2-console"

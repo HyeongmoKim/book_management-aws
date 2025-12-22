@@ -1,5 +1,10 @@
 version: 0.2
 
+env:
+  variables:
+    # 1. 여기에 백엔드 로드밸런서 주소를 고정합니다. (나중에 주소가 바뀌면 여기만 고치면 됩니다)
+    VITE_API_URL: "http://a4d052a12d1ed4de2a52da25e6aaf68b-365606936.ap-northeast-2.elb.amazonaws.com"
+
 phases:
   install:
     runtime-versions:
@@ -19,13 +24,15 @@ phases:
     commands:
       - echo "Build started on `date`"
       - cd $CODEBUILD_SRC_DIR/frontend/src
-      - npm run build
+      # 2. Vite 빌드 시 환경변수를 참조하도록 명시적으로 전달
+      - VITE_API_URL=$VITE_API_URL npm run build
       - echo "Building the Docker image..."
-      - cd $CODEBUILD_SRC_DIR/frontend
-      - docker build -t $REPOSITORY_URI:latest .
+      - cd ..
+      # 3. Docker 이미지 빌드 시에도 주입 (Dockerfile 내의 ARG VITE_API_URL과 연결됨)
+      - docker build --build-arg VITE_API_URL=$VITE_API_URL -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
-  post_build: # 이 근처 들여쓰기를 확인하세요! (36번 줄 근처)
+  post_build:
     commands:
       - echo "Pushing the Docker image..."
       - docker push $REPOSITORY_URI:latest
