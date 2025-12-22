@@ -4,18 +4,19 @@ WORKDIR /app
 
 # [중요] 빌드 시점에 외부에서 값을 받아올 수 있게 ARG 설정
 ARG VITE_API_URL
-# 받아온 값을 환경변수로 고정 (Vite 빌드 시 이 값을 참조함)
 ENV VITE_API_URL=$VITE_API_URL
 
 COPY package*.json ./
 RUN npm install
 COPY . .
 
-# 여기서 npm run build를 할 때 위 ENV 값이 코드에 박힙니다.
+# 여기서 npm run build를 할 때 Vite 설정에 따라 /app/build 폴더가 생성됩니다.
 RUN npm run build
 
 # 2단계: 실행 스테이지 (Nginx)
 FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
+# [수정] 로그에서 확인된 대로 dist가 아닌 build 폴더를 복사합니다.
+COPY --from=build /app/build /usr/share/nginx/html
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
