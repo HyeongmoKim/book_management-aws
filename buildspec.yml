@@ -36,4 +36,4 @@ phases:
       - cd $CODEBUILD_SRC_DIR
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name a084110-EKSCluster
       - kubectl apply -f k8s/front_deployment.yaml
-      - kubectl apply -f k8s/service.yaml
+      - kubectl apply -f k8s/front_service.yaml
