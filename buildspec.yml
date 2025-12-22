@@ -27,12 +27,12 @@ phases:
       - cd $CODEBUILD_SRC_DIR/frontend/src
       
       # 2. Vite 빌드 수행
-      - VITE_API_URL=$VITE_API_URL npm run build
+      - VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
       
       - echo "Building the Docker image..."
       # 3. [중요] cd .. 을 하지 않고, 현재 위치(.)에서 바로 빌드합니다.
       # Dockerfile이 src 폴더 안에 있어야 합니다.
-      - docker build --build-arg VITE_API_URL=$VITE_API_URL -t $REPOSITORY_URI:latest .
+      - docker build --build-arg VITE_API_BASE_URL=$VITE_API_BASE_URL -t $REPOSITORY_URI:latest .
       
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
