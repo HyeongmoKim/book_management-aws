@@ -18,7 +18,6 @@ spec:
       - name: a084110-frontend
         # 아래 주소로 정확히 수정하세요
         image: 416225317325.dkr.ecr.ap-northeast-2.amazonaws.com/a084110-frontend:latest
-        ports:
-        - containerPort: 80
-        # 컨테이너가 항상 최신 이미지를 받아오도록 설정
-        imagePullPolicy: Always
+        env:
+        - name: BACKEND_URL # 이 이름을 실제 코드에서 쓰는 이름으로 맞추세요
+          value: "http://a4d052a12d1ed4de2a52da25e6aaf68b-365606936.ap-northeast-2.elb.amazonaws.com"
