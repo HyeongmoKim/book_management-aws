@@ -15,8 +15,8 @@ spec:
         app: a084110-frontend
     spec:
       containers:
-      - name: frontend
-        # 빌드된 최신 이미지를 가져옵니다.
+      - name: a084110-frontend
+        # 아래 주소로 정확히 수정하세요
         image: 416225317325.dkr.ecr.ap-northeast-2.amazonaws.com/a084110-frontend:latest
         ports:
         - containerPort: 80
