@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     # 1. 여기에 백엔드 로드밸런서 주소를 고정합니다. (나중에 주소가 바뀌면 여기만 고치면 됩니다)
-    VITE_API_URL: "http://a4d052a12d1ed4de2a52da25e6aaf68b-365606936.ap-northeast-2.elb.amazonaws.com"
+    VITE_API_BASE_URL: "http://a4d052a12d1ed4de2a52da25e6aaf68b-365606936.ap-northeast-2.elb.amazonaws.com"
 
 phases:
   install:
