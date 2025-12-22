@@ -4,7 +4,7 @@ import { Box, TextField, Button, Typography, Paper, AppBar, Toolbar } from '@mui
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import axios from 'axios'; // axios 추가
+import api from "../api";
 
 const theme = createTheme({
     palette: {
@@ -45,7 +45,7 @@ function RegisterPage() {
 
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:8080/api/users', {
+            const response = await api.post('/api/users', {
                 email: form.email,
                 password: form.password,
                 name: form.name,
@@ -81,10 +81,12 @@ function RegisterPage() {
                 </AppBar>
 
                 {/* 회원가입 박스 */}
-                <Box display="flex"
-                     justifyContent="center"
-                     alignItems="center"
-                     sx={{ height: 'calc(100vh - 500px)' }}>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="flex-start"   // 중앙정렬 대신 상단정렬
+                    sx={{ pt: 10, height: 'calc(100vh - 100px)' }} // pt: padding-top
+                >
                     <Paper
                         elevation={3}
                         sx={{

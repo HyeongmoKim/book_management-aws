@@ -6,6 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import api from "../api";
 
 export default function TopBar() {
     const navigate = useNavigate();
@@ -18,34 +19,32 @@ export default function TopBar() {
         if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
         try {
-            const response = await fetch(`/api/books/${bookId}`, {
-                method: "DELETE",
+            await api.delete(`/api/books/${bookId}`, {
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,  // JWT 사용 시
+                    Authorization: `Bearer ${token}`, // 인터셉터 있으면 이 줄도 제거 가능
                 },
             });
 
-            // 403: 작성자가 아님
-            if (response.status === 403) {
-                const error = await response.json();
-                alert(error.message);
-                return;
-            }
-
-            // 기타 실패
-            if (!response.ok) {
-                alert("글 삭제 중 오류가 발생했습니다.");
-                return;
-            }
-
-            // 204 성공 → 목록 페이지로 이동
+            // axios는 2xx면 여기로 바로 옴
             alert("삭제가 완료되었습니다.");
             navigate("/MainPage");
 
         } catch (err) {
-            console.error(err);
-            alert("서버와 통신 중 오류가 발생했습니다.");
+            // axios는 에러를 catch로 던짐
+            if (err.response) {
+                // 403: 작성자가 아님
+                if (err.response.status === 403) {
+                    alert(err.response.data.message);
+                    return;
+                }
+
+                // 기타 서버 에러
+                alert("글 삭제 중 오류가 발생했습니다.");
+            } else {
+                // 네트워크 에러
+                console.error(err);
+                alert("서버와 통신 중 오류가 발생했습니다.");
+            }
         }
     };
 

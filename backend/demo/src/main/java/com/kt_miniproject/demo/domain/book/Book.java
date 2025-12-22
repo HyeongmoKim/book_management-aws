@@ -49,8 +49,8 @@ public class Book {
     // ============= ★★★ ERD 변경으로 인해 추가된 부분 ★★★ ============= //
 
     // book.user_user_id -> user.user_id
-    @ManyToOne
-    @JoinColumn(name = "users_user_id", nullable = true)   // ★ FK 이름 맞춰 수정
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "users_user_id", nullable = false)   // ★ FK 이름 맞춰 수정
     private User user;
 
     // book : comment = 1 : N

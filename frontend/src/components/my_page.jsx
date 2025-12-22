@@ -7,7 +7,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import axios from 'axios';
+import api from "../api";
 
 const theme = createTheme({
     palette: {
@@ -41,7 +41,7 @@ function MyPage() {
                     return;
                 }
 
-                const response = await axios.get(`http://localhost:8080/api/users/${userId}`);
+                const response = await api.get(`/api/users/${userId}`);
 
                 if (response.status === 200) {
                     const data = response.data;
@@ -85,7 +85,7 @@ function MyPage() {
         }
 
         try {
-            await axios.delete(`http://localhost:8080/api/books/${bookId}?userId=${userId}`);
+            await api.delete(`/api/books/${bookId}?userId=${userId}`);
 
             setPosts(prevPosts => prevPosts.filter(post => post.id !== bookId));
 
@@ -111,7 +111,7 @@ function MyPage() {
                 ...(userInfo.password && { password: userInfo.password })
             };
 
-            await axios.put(`http://localhost:8080/api/users/${userId}`, updateData);
+            await api.put(`/api/users/${userId}`, updateData);
 
             alert('회원정보가 수정되었습니다.');
             setUserInfo(prev => ({ ...prev, password: '' }));

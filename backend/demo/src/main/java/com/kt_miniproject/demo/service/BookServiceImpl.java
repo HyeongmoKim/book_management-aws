@@ -38,11 +38,14 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional
     public BookResponse createBook(BookCreateRequest request) {
-        User user = null;
-        if (request.getUserId() != null) {
-            user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found. id=" + request.getUserId()));
+        if (request.getUserId() == null) {
+            throw new IllegalArgumentException("userId는 필수입니다.");
         }
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found. id=" + request.getUserId()));
+
+
         Book book = Book.builder()
                 .title(request.getTitle())
                 .content(request.getContent())

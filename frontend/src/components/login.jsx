@@ -4,7 +4,7 @@ import { Box, TextField, Button, Typography, Paper, AppBar, Toolbar } from '@mui
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import axios from 'axios';
+import api from "../api";
 
 const theme = createTheme({
     palette: {
@@ -42,7 +42,7 @@ function LoginPage() {
 
         setLoading(true);
         try {
-            const response = await axios.post('/api/users/login', {
+            const response = await api.post('/api/users/login', {
                 email: form.email,       // 사용자가 입력한 이메일
                 password: form.password  // 사용자가 입력한 비밀번호
             }, {

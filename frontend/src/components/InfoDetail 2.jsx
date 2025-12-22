@@ -4,7 +4,7 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import InfoComment from "./InfoComment";
 import { useParams } from "react-router-dom";
-
+import api from "../api";
 
 export default function InfoDetail() {
     const { id } = useParams();
@@ -19,8 +19,8 @@ export default function InfoDetail() {
 
     const fetchBookDetail = async () => {
         try {
-            const res = await fetch(`/api/books/${bookId}`);
-            const data = await res.json();
+            const res = await api.get(`/api/books/${bookId}`);
+            const data = res.data;
 
             setBook(data);
             setRecommend(data.recommend);
@@ -36,29 +36,32 @@ export default function InfoDetail() {
         }
 
         try {
-            const res = await fetch(
+            const res = await api.post(
                 `/api/books/${bookId}/like`,
+                { userId: Number(userId) },
                 {
-                    method: "POST",
+                    params: { isUpvote },
                     headers: {
-                        "Content-Type": "application/json",
                         Authorization: `Bearer ${accessToken}`,
                     },
-                    body: JSON.stringify({ userId: Number(userId) }),
                 }
             );
 
-            const result = await res.json();
-
-            if (res.status === 409) {
-                alert("이미 추천한 게시글입니다.");
-                return;
+            // ✔ 백엔드가 최신 추천 수를 내려주는 경우
+            if (typeof res.data === "number") {
+                setRecommend(res.data);
+            } else {
+                // ✔ 혹시 숫자 안 내려주면 기존 로직 유지
+                setRecommend((prev) => prev + (isUpvote ? 1 : -1));
             }
 
-            setRecommend((prev) => prev + (isUpvote ? 1 : -1));
-            setHasVoted(true); // 한번만 가능
+            setHasVoted(true);
         } catch (error) {
-            console.error("추천 요청 실패:", error);
+            if (error.response?.status === 409) {
+                alert("이미 추천한 게시글입니다.");
+            } else {
+                console.error("추천 요청 실패:", error);
+            }
         }
     };
 

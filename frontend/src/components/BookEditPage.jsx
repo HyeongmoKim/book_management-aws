@@ -22,7 +22,7 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
+import api from "../api";
 import {createTheme,ThemeProvider} from "@mui/material/styles";
 
 
@@ -58,7 +58,7 @@ function BookEditPage() {
   const fetchBookDetails = async () => {
     setFetchLoading(true);
     try {
-      const response = await axios.get(`/api/books/${id}`);
+      const response = await api.get(`/api/books/${id}`);
       
       if (response.data.success && response.data.data) {
         const book = response.data.data;
@@ -125,7 +125,7 @@ function BookEditPage() {
     setError('');
 
     try {
-      const response = await axios.post('/api/common/generate-cover', {
+      const response = await api.post('/api/common/generate-cover', {
         prompt: aiPrompt
       });
 
@@ -182,7 +182,7 @@ function BookEditPage() {
       }
       // coverImageType이 'existing'이면 기존 이미지 유지 (서버에서 처리)
 
-      const response = await axios.put(`/api/books/${id}`, formDataToSend, {
+      const response = await api.put(`/api/books/${id}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

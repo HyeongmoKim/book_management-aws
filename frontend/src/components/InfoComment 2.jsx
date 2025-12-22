@@ -3,6 +3,7 @@ import { Box, TextField, Button, Typography, IconButton } from "@mui/material";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import CloseIcon from "@mui/icons-material/Close";
+import api from "../api";
 
 import { useParams } from "react-router-dom";
 
@@ -20,26 +21,23 @@ export default function InfoComment({bookId,comments:initialComments}) {
             alert("댓글 내용을 입력해야 합니다.");
             return;
         }
+
         try {
-            const response = await fetch(`/api/books/${bookId}/comments`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
+            const res = await api.post(
+                `/api/books/${bookId}/comments`,
+                {
                     userId: Number(userId),
                     content: newComment,
-                }),
-            });
+                    parentId, // 🔹 대댓글 쓰는 구조면 유지 (백엔드에서 안 쓰면 무시됨)
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
-            if (!response.ok) {
-                const error = await response.json();
-                alert(error.message);
-                return;
-            }
-
-            const data = await response.json();
+            const data = res.data;
 
             // 서버에서 받은 댓글 데이터를 UI에 추가
             setComments((prev) => [
@@ -49,9 +47,7 @@ export default function InfoComment({bookId,comments:initialComments}) {
                     text: data.content,
                     author: data.userId,
                     timestamp: data.createdAt,
-                    //replies: [],
-                    //isReplying: false,
-                    likes: data.recommend,
+                    likes: data.recommend ?? 0,
                 },
             ]);
 
@@ -59,7 +55,12 @@ export default function InfoComment({bookId,comments:initialComments}) {
 
         } catch (err) {
             console.error(err);
-            alert("댓글 작성 중 오류가 발생했습니다.");
+
+            if (err.response?.data?.message) {
+                alert(err.response.data.message);
+            } else {
+                alert("댓글 작성 중 오류가 발생했습니다.");
+            }
         }
     };
 
@@ -76,35 +77,22 @@ export default function InfoComment({bookId,comments:initialComments}) {
     // };
 
     /* -------------------- 좋아요/싫어요 -------------------- */
-    const handleLike = async(commentId, delta) => {
+    const handleLike = async (commentId, delta) => {
         try {
-            // delta가 1이면 추천, -1이면 비추천
-            const response = await fetch(
+            const res = await api.post(
                 `/api/books/${bookId}/comments/${commentId}/like`,
                 {
-                    method: "POST",
+                    userId: Number(userId),
+                    delta, // 🔹 백엔드에서 쓰면 전달 / 안 쓰면 무시됨
+                },
+                {
                     headers: {
-                        "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ userId: Number(userId) }),
                 }
             );
 
-            if (response.status === 409) {
-                // 이미 추천/비추천 한 경우
-                const error = await response.json();
-                alert(error.message);
-                return;
-            }
-
-            if (!response.ok) {
-                const error = await response.json();
-                alert(error.message || "추천 요청 실패");
-                return;
-            }
-
-            const data = await response.json();
+            const data = res.data;
 
             setComments((prev) =>
                 prev.map((comment) =>
@@ -113,54 +101,49 @@ export default function InfoComment({bookId,comments:initialComments}) {
                         : comment
                 )
             );
+
         } catch (err) {
             console.error(err);
-            alert("추천 요청 중 오류가 발생했습니다.");
+
+            if (err.response?.status === 409) {
+                alert(err.response.data.message || "이미 추천한 댓글입니다.");
+            } else {
+                alert("추천 요청 중 오류가 발생했습니다.");
+            }
         }
     };
 
     /* -------------------- 댓글 삭제 -------------------- */
-    const handleDelete = async(commentId) => {
+    const handleDelete = async (commentId) => {
         try {
-
-            const response = await fetch(
+            await api.delete(
                 `/api/books/${bookId}/comments/${commentId}`,
                 {
-                    method: "DELETE",
                     headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,  // JWT 사용 시 필요
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
 
-            // 403 — 작성자가 아님
-            if (response.status === 403) {
-                const error = await response.json();
-                alert(error.message);
-                return;
-            }
-
-            // 기타 실패 처리
-            if (!response.ok) {
-                alert("댓글 삭제 중 오류가 발생했습니다.");
-                return;
-            }
-
-            // 성공 204 → 로컬 상태에서도 삭제
+            // 성공 → 로컬 상태에서도 삭제
             const remove = (nodes) =>
                 nodes
                     .filter((node) => node.id !== commentId)
                     .map((node) => ({
                         ...node,
-                        replies: remove(node.replies),
+                        replies: remove(node.replies || []),
                     }));
 
             setComments((prev) => remove(prev));
 
         } catch (err) {
             console.error(err);
-            alert("서버와 통신 중 오류가 발생했습니다.");
+
+            if (err.response?.status === 403) {
+                alert(err.response.data.message || "삭제 권한이 없습니다.");
+            } else {
+                alert("댓글 삭제 중 오류가 발생했습니다.");
+            }
         }
     };
 

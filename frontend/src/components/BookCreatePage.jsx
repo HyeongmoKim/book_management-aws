@@ -22,7 +22,7 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
+import api from "../api";
 
 function BookCreatePage() {
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ function BookCreatePage() {
     setError('');
 
     try {
-      const response = await axios.post('/api/common/generate-cover', {
+      const response = await api.post('/api/common/generate-cover', {
         prompt: aiPrompt
       });
 
@@ -131,7 +131,7 @@ function BookCreatePage() {
         formDataToSend.append('aiCoverUrl', previewImage);
       }
 
-      const response = await axios.post('/api/books', formDataToSend, {
+      const response = await api.post('/api/books', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

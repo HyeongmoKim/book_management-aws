@@ -15,7 +15,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
 import bookService from './bookService';   // 도서 데이터를 가져오거나 조작하는 로직을 모아 둔 모듈을 불러오는 구문
 import BookCard from '../components/BookCard';
-import axios from 'axios';
+import api from "../api";
 import { createTheme, ThemeProvider } from "@mui/material/styles"; // 로그아웃 API 요청용
 const theme = createTheme({
     palette: {
@@ -40,7 +40,7 @@ function MainPage() {
     // 로그아웃 기능
     const handleLogout = async () => {
         try {
-            await axios.post('/api/auth/logout'); // 로그아웃 API 요청
+            await api.post('/api/auth/logout'); // 로그아웃 API 요청
         } catch (e) {
             console.error('로그아웃 실패:', e);
         } finally {

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from "../api";
 
 const fetchBooks = async (keyword) => {
 	// If no keyword, fetch all books (or handle as needed)
@@ -6,7 +6,7 @@ const fetchBooks = async (keyword) => {
 	const params = keyword ? { title: keyword } : {};
 
 	try {
-		const response = await axios.get(url, { params });
+		const response = await api.get(url, { params });
 
 		// Backend returns List<BookResponse> directly
 		const items = response.data;
@@ -31,7 +31,7 @@ const fetchBooks = async (keyword) => {
 };
 
 const createBook = (formData) => {
-	return axios.post('/api/books', formData, {
+	return api.post('/api/books', formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data',
 		},
@@ -39,21 +39,21 @@ const createBook = (formData) => {
 };
 
 const getBook = (id) => {
-	return axios.get(`/api/books/${id}`);
+	return api.get(`/api/books/${id}`);
 };
 
 const updateBook = (id, data) => {
-	return axios.put(`/api/books/${id}`, data);
+	return api.put(`/api/books/${id}`, data);
 };
 
 const deleteBook = (id, userId) => {
-	return axios.delete(`/api/books/${id}`, {
+	return api.delete(`/api/books/${id}`, {
 		params: { userId }
 	});
 };
 
 const getMyBooks = (userId) => {
-	return axios.get('/api/books/my', {
+	return api.get('/api/books/my', {
 		params: { userId }
 	}).then(response => {
 		// Transform response if necessary, similar to fetchBooks
@@ -62,15 +62,15 @@ const getMyBooks = (userId) => {
 };
 
 const getUser = (userId) => {
-	return axios.get(`/api/users/${userId}`);
+	return api.get(`/api/users/${userId}`);
 };
 
 const updateUser = (userId, userData) => {
-	return axios.put(`/api/users/${userId}`, userData);
+	return api.put(`/api/users/${userId}`, userData);
 };
 
 const likeBook = (id) => {
-	return axios.post(`/api/books/${id}/like`);
+	return api.post(`/api/books/${id}/like`);
 };
 
 export default { fetchBooks, createBook, getBook, updateBook, deleteBook, getMyBooks, getUser, updateUser, likeBook };

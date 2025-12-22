@@ -1,7 +1,7 @@
 // src/pages/FindAccount.jsx
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, Paper, Alert, Tabs, Tab, AppBar, Toolbar } from '@mui/material';
-import axios from 'axios';
+import api from "../api";
 import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import logo from "../assets/logo.png";
@@ -38,7 +38,7 @@ function FindAccount() {
         }
         try {
             // 기존: /api/users/modify → 수정: /api/users/modify/find_email
-            const response = await axios.get("http://localhost:8080/api/users/modify/find_email", { params: { name } });
+            const response = await api.get("/api/users/modify/find_email", { params: { name } });
 
             // 수정: 응답 구조 변경
             if (response.status === 200) { // response.data.message 체크 대신 status 확인
@@ -62,7 +62,7 @@ function FindAccount() {
         }
         try {
             // 기존: /api/v1/users/modify → 수정: /api/users/modify/find_password
-            const response = await axios.get("http://localhost:8080/api/users/modify/find_password", { params: { name, email } });
+            const response = await api.get("/api/users/modify/find_password", { params: { name, email } });
 
             if (response.status === 200) { // 서버가 문자열 반환
                 setResult({ type: "password", password: response.data }); // "비밀번호는: ..." 반환

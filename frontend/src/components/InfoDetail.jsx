@@ -6,7 +6,7 @@ import InfoComment from "./InfoComment";
 import { useParams, useNavigate } from "react-router-dom"; // Added useNavigate
 
 
-import axios from "axios";
+import api from "../api";
 import bookService from "./bookService";
 
 export default function InfoDetail() {
@@ -42,32 +42,31 @@ export default function InfoDetail() {
         }
 
         try {
-            // 2. 백엔드에 요청 보내기 (URL에 isUpvote 포함)
-            const res = await fetch(
-                `/api/books/${bookId}/like?isUpvote=${isUpvote}`,
+            const res = await api.post(
+                `/api/books/${bookId}/like`,
+                { userId: Number(userId) },      // body
                 {
-                    method: "POST",
+                    params: { isUpvote },        // query param
                     headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${accessToken}`, // 토큰이 있다면 사용
+                        Authorization: `Bearer ${accessToken}`,
                     },
-                    body: JSON.stringify({ userId: Number(userId) }),
                 }
             );
 
-            // 3. 응답 처리
-            if (res.status === 200) {
-                // ★ [여기가 변경된 부분입니다]
-                // 백엔드가 보낸 최신 추천 수(Integer)를 받아서 화면에 반영
-                const updatedCount = await res.json();
-                setRecommend(updatedCount);
+            // 2. 성공(200)
+            // axios에서는 res.data가 바로 응답 body
+            const updatedCount = res.data;
+            setRecommend(updatedCount);
+            setHasVoted(true);
 
-                setHasVoted(true); // 투표 완료 처리
-            } else if (res.status === 409) {
-                alert("이미 추천한 게시글입니다.");
-            }
         } catch (error) {
-            console.error("추천 요청 실패:", error);
+            // 3. 에러 처리
+            if (error.response?.status === 409) {
+                alert("이미 추천한 게시글입니다.");
+            } else {
+                console.error("추천 요청 실패:", error);
+                alert("추천 처리 중 오류가 발생했습니다.");
+            }
         }
     };
 

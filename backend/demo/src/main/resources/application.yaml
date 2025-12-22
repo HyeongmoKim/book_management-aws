@@ -1,23 +1,21 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testes;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: dw
-    password: 1234
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: <DB_USER>
+    password: <DB_PASSWORD>
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    defer-datasource-initialization: true
+    open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
 
-  sql:
-    init:
-      mode: always
+app:
+  api-url: ${API_URL:http://localhost:8080}  # 필요 시 백엔드 ELB 주소
+  cors:
+    allowed-origins: http://k8s-default-a084110f-669abede59-50dcce7293374d93.elb.ap-northeast-2.amazonaws.com
