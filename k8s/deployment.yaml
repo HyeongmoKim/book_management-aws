@@ -17,3 +17,19 @@ spec:
         image: 416225317325.dkr.ecr.ap-northeast-2.amazonaws.com/a084110-backend:latest
         ports:
         - containerPort: 8080
+        env:
+        # 1. DB 연결 주소 (이미지의 프라이빗 IP 172.31.35.161 사용)
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://172.31.35.161:3306/a084110?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=UTC"
+        
+        # 2. DB 사용자 계정 (이미지의 DB_USER=admin 사용)
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "admin"
+        
+        # 3. DB 비밀번호 (이미지의 DB_PASSWORD 사용)
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "비밀번호" # 실제 비밀번호 문구로 교체하세요
+
+        # JPA 설정 (필요시 추가)
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: "update"
