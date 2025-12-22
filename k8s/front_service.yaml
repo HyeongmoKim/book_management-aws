@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: a084110-frontend-service
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80          # 로드밸런서 외부 포트
+      targetPort: 80    # 컨테이너 내부 포트 (Nginx 포트)
+      protocol: TCP
+  selector:
+    app: a084110-frontend
