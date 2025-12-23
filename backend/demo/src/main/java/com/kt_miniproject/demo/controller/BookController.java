@@ -89,10 +89,22 @@ public class BookController {
     @PutMapping("/{id}")
     public ResponseEntity<BookResponse> updateBook(
             @PathVariable Long id,
-            @RequestBody BookCreateRequest request,
-            @RequestParam Long userId   // 로그인 사용자 ID
-    ) {
-        BookResponse response = bookService.updateBook(id, request, userId);
+            @RequestPart("title") String title,
+            @RequestPart("content") String content,
+            @RequestPart("userId") Long userId,
+            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
+            @RequestPart(value = "aiCoverUrl", required = false) String aiCoverUrl
+    ) throws IOException {
+
+        // 이미지 처리
+        String coverImageUrl = null;
+        if (coverImage != null && !coverImage.isEmpty()) {
+            coverImageUrl = s3Service.upload(coverImage);
+        } else if (aiCoverUrl != null && !aiCoverUrl.isBlank()) {
+            coverImageUrl = s3Service.uploadFromUrl(aiCoverUrl);
+        }
+
+        BookResponse response = bookService.updateBook(id, title, content, coverImageUrl, userId);
         return ResponseEntity.ok(response);
     }
 
