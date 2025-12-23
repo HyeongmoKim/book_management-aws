@@ -16,17 +16,35 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$/backend/demo">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand />
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="package.json" />
+        <option value="Class" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="26789ad37254f97e59751150183b7ebec6caf932" />
+        <entry key="$PROJECT_DIR$" value="d61fec850f0c608703cab6a0c42b30c95599ad2b" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -38,12 +56,15 @@
     &quot;assignee&quot;: &quot;HDYee&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/sprintmonster/book_management.git",
-    "accountId": "f8898d12-e6ff-4410-942d-9abc5eb1a03a"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/HyeongmoKim/book_management-aws.git&quot;,
+    &quot;accountId&quot;: &quot;f8898d12-e6ff-4410-942d-9abc5eb1a03a&quot;
   }
-}]]></component>
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
@@ -70,6 +91,7 @@
     "git-widget-placeholder": "LSY",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/User/coding/book_management-aws",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
@@ -121,6 +143,7 @@
         <item itemvalue="Spring Boot.DemoApplication" />
         <item itemvalue="Spring Boot.DemoApplication" />
         <item itemvalue="Spring Boot.DemoApplication" />
+        <item itemvalue="Spring Boot.DemoApplication" />
       </list>
     </recent_temporary>
   </component>
@@ -132,6 +155,9 @@
       </set>
     </attachedChunks>
   </component>
+  <component name="StructureViewState">
+    <option name="selectedTab" value="논리" />
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="디폴트 작업">
       <changelist id="36e743d5-6370-4a9d-9808-00ac3fcb5350" name="변경" comment="" />
@@ -141,7 +167,28 @@
       <updated>1765194751713</updated>
       <workItem from="1765194753302" duration="5066000" />
       <workItem from="1765281292239" duration="8677000" />
+      <workItem from="1766453526381" duration="4000" />
+      <workItem from="1766453532516" duration="3000" />
+      <workItem from="1766453553193" duration="6110000" />
+      <workItem from="1766464129334" duration="3270000" />
     </task>
+    <task id="LOCAL-00001" summary="이미지 업로드 (S3)">
+      <option name="closed" value="true" />
+      <created>1766457585544</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1766457585544</updated>
+    </task>
+    <task id="LOCAL-00002" summary="ai 이미지 생성 백엔드로 전환">
+      <option name="closed" value="true" />
+      <created>1766466659747</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1766466659747</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -162,5 +209,10 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="이미지 업로드 (S3)" />
+    <MESSAGE value="ai 이미지 생성 백엔드로 전환" />
+    <option name="LAST_COMMIT_MESSAGE" value="ai 이미지 생성 백엔드로 전환" />
   </component>
 </project>
