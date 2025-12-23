@@ -10,9 +10,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.kt_miniproject.demo.service.OpenAIService;
+import java.util.Map;
 import java.io.IOException;
 import java.util.List;
+
+private final OpenAIService openAIService; // 주입 필요
 
 @RestController
 @RequestMapping("/api/books")
@@ -88,10 +91,30 @@ public class BookController {
     // PUT /api/books/{id}
     @PutMapping("/{id}")
     public ResponseEntity<BookResponse> updateBook(
-            @PathVariable("id") Long id,
-            @RequestBody BookCreateRequest request) {
+            @PathVariable Long id,
+            @RequestPart("title") String title,
+            @RequestPart("content") String content,
+            @RequestPart("userId") Long userId,
+            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
+            @RequestPart(value = "aiCoverUrl", required = false) String aiCoverUrl
+    ) throws IOException {
 
-        BookResponse response = bookService.updateBook(id, request);
+        // 이미지 처리
+        String coverImageUrl = null;
+        if (coverImage != null && !coverImage.isEmpty()) {
+            coverImageUrl = s3Service.upload(coverImage);
+        } else if (aiCoverUrl != null && !aiCoverUrl.isBlank()) {
+            coverImageUrl = s3Service.uploadFromUrl(aiCoverUrl);
+        }
+
+        // ★ BookCreateRequest 객체 생성
+        BookCreateRequest request = new BookCreateRequest();
+        request.setTitle(title);
+        request.setContent(content);
+        request.setCoverImageUrl(coverImageUrl);
+
+        // 서비스 호출
+        BookResponse response = bookService.updateBook(id, request, userId);
         return ResponseEntity.ok(response);
     }
 
@@ -119,12 +142,17 @@ public class BookController {
 
     // 7. AI로 표지 이미지 생성
     // PUT /api/books/{id}/generate-image
-    @PutMapping("/{id}/generate-image")
-    public ResponseEntity<String> generateAiImageUrl(
-            @PathVariable("id") Long id) {
+    @PostMapping("/generate-image")
+    public ResponseEntity<?> generateAiCover(@RequestBody Map<String, String> request) {
+        String prompt = request.get("prompt");
+        String apiKey = request.get("apiKey"); // 프론트에서 보낸 키 (없으면 null)
 
-        String bookUrl = bookService.generateAiImageUrl(id);
-        return ResponseEntity.ok(bookUrl);
+        try {
+            String imageUrl = openAIService.generateImage(prompt, apiKey);
+            return ResponseEntity.ok(Map.of("success", true, "imageUrl", imageUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/like")

@@ -86,12 +86,13 @@ function Enroll() {
         }
     };
 
-    // AI 표지 생성 (프론트에서 OpenAI 직접 호출)
+    // AI 표지 생성 (백엔드 중계 방식)
     const handleGenerateAI = async () => {
-        if (!aiPrompt.trim() || !apiKey.trim()) {
-            setError('API Key와 프롬프트를 모두 입력해주세요.');
+        if (!aiPrompt.trim()) {
+            setError('프롬프트를 입력해주세요.');
             return;
         }
+        // apiKey는 선택사항이 됨 (백엔드에 키가 있다면)
 
         setAiGenerating(true);
         setError('');
@@ -99,39 +100,23 @@ function Enroll() {
         setAiImageConfirmed(false);
 
         try {
-            const response = await fetch(
-                'https://api.openai.com/v1/images/generations',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${apiKey}`,
-                    },
-                    body: JSON.stringify({
-                        prompt: aiPrompt,
-                        n: 1,
-                        size: '512x512',
-                    }),
-                },
-            );
+            // ★ 변경된 부분: 백엔드로 요청을 보냄
+            const response = await api.post('/api/books/generate-image', {
+                prompt: aiPrompt,
+                apiKey: apiKey // 유저가 입력한 키가 있으면 보냄
+            });
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(
-                    errData.error?.message || '이미지 생성 실패',
-                );
+            if (response.data.success) {
+                const url = response.data.imageUrl;
+                setPreviewImage(url);
+                setSuccess('AI 표지가 생성되었습니다.');
+            } else {
+                throw new Error(response.data.message || '생성 실패');
             }
 
-            const data = await response.json();
-            const url = data.data[0].url;
-
-            setPreviewImage(url);
-            setSuccess(
-                'AI 표지가 생성되었습니다. 이미지를 사용하거나 다시 생성할 수 있습니다.',
-            );
         } catch (err) {
             console.error(err);
-            setError(err.message || 'AI 이미지 생성 중 오류가 발생했습니다.');
+            setError(err.response?.data?.message || err.message || 'AI 이미지 생성 실패');
         } finally {
             setAiGenerating(false);
         }
