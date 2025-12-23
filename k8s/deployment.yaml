@@ -18,28 +18,19 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        # 1. 수정된 H2 접속 주소 (인메모리 방식)
+        # [수정] 에러의 핵심인 URL 문법을 H2 표준 세미콜론(;)으로 바꿨습니다.
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
-        
-        # 2. H2 기본 계정 정보
+          value: "jdbc:h2:file:/app/data/testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
         - name: SPRING_DATASOURCE_USERNAME
           value: "sa"
         - name: SPRING_DATASOURCE_PASSWORD
-          value: "" 
-
-        # 3. H2 드라이버 명시
+          value: ""
         - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
           value: "org.h2.Driver"
-
-        # 4. H2 전용 문법(Dialect) 설정
-        - name: SPRING_JPA_DATABASE_PLATFORM
-          value: "org.hibernate.dialect.H2Dialect"
-        
-        # 5. 테이블 자동 생성 및 H2 콘솔 활성화
+        # [추가] 로그에 떴던 USERS 테이블 에러를 막는 핵심 옵션
+        - name: SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION
+          value: "true"
+        - name: SPRING_SQL_INIT_MODE
+          value: "always"
         - name: SPRING_JPA_HIBERNATE_DDL_AUTO
           value: "update"
-        - name: SPRING_H2_CONSOLE_ENABLED
-          value: "true"
-        - name: SPRING_H2_CONSOLE_PATH
-          value: "/h2-console"
