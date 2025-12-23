@@ -1,19 +1,25 @@
 spring:
+  h2:
+    console:
+      enabled: true           # 웹에서 DB를 확인할 수 있게 콘솔 활성화
+      path: /h2-console       # 주소: 백엔드주소/h2-console
+
   datasource:
-    url: jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: <DB_USER>
-    password: <DB_PASSWORD>
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # [수정] 에러가 났던 복잡한 옵션들을 제거하고 표준 세미콜론(;) 방식으로 변경했습니다.
+    # 인메모리 방식: 서버 재시작 시 데이터 초기화
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
 
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
-    open-in-view: false
+      ddl-auto: update        # 엔티티를 보고 테이블을 자동 생성
+    show-sql: true            # 실행되는 쿼리를 로그로 확인
     properties:
       hibernate:
         format_sql: true
-        jdbc:
-          time_zone: Asia/Seoul
 
 app:
   api-url: ${API_URL:http://localhost:8080}  # 필요 시 백엔드 ELB 주소
