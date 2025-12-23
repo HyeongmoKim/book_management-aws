@@ -34,3 +34,18 @@ spec:
           value: "always"
         - name: SPRING_JPA_HIBERNATE_DDL_AUTO
           value: "update"
+        - name: AWS_ACCESS_KEY  # application.yml에 적은 이름
+          valueFrom:
+            secretKeyRef:
+              name: aws-secret  # 2단계에서 만든 비밀상자 이름
+              key: access-key   # 그 안에 담긴 키 이름
+        - name: AWS_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-secret
+              key: secret-key
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            secretKeyRef:
+              name: aws-secret
+              key: bucket-name

@@ -4,10 +4,8 @@ import com.kt_miniproject.demo.dto.book.BookCoverUrlUpdateRequest;
 import com.kt_miniproject.demo.dto.book.BookCreateRequest;
 import com.kt_miniproject.demo.dto.book.BookResponse;
 import com.kt_miniproject.demo.service.BookService;
-import com.kt_miniproject.demo.service.FileStorageService;
-import com.kt_miniproject.demo.util.FileStore;
+import com.kt_miniproject.demo.service.S3Service; // ★ FileStore 대신 S3Service import
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,38 +15,44 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/books") // 전체 prefix
+@RequestMapping("/api/books")
 @RequiredArgsConstructor
 public class BookController {
 
     private final BookService bookService;
-    private final FileStore fileStore;
+    private final S3Service s3Service; // ★ FileStore 대신 S3Service 주입
 
     // 1. 도서 등록 (Create)
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // ★ 중요: 이 줄 필수!
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BookResponse> createBook(
             @RequestPart("title") String title,
             @RequestPart("content") String content,
-            @RequestPart("userId") String userId, // 프론트에서 보낸 userId 받기
+            @RequestPart("userId") String userId,
+            // 파일과 URL 둘 다 필수가 아님 (required = false)
             @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
             @RequestPart(value = "aiCoverUrl", required = false) String aiCoverUrl) throws IOException {
 
-        // 1. 이미지 처리
         String coverImageUrl = null;
-        if (aiCoverUrl != null && !aiCoverUrl.isBlank()) {
-            coverImageUrl = aiCoverUrl;
-        } else if (coverImage != null && !coverImage.isEmpty()) {
-            coverImageUrl = fileStore.storeFile(coverImage);
+
+        // [로직 1] 사용자가 직접 파일을 올린 경우 -> S3 업로드
+        if (coverImage != null && !coverImage.isEmpty()) {
+            coverImageUrl = s3Service.upload(coverImage);
+        }
+        // [로직 2] AI 이미지를 선택한 경우 -> URL 다운로드 후 S3 업로드 (심화 기능 적용)
+        else if (aiCoverUrl != null && !aiCoverUrl.isBlank()) {
+            // ★ 중요: aiCoverUrl(임시주소)를 그대로 DB에 넣는 게 아니라,
+            // S3Service를 통해 영구 저장소로 옮긴 후 그 S3 주소를 받아서 저장함
+            coverImageUrl = s3Service.uploadFromUrl(aiCoverUrl);
         }
 
-        // 2. DTO 만들기
+        // 3. DTO 만들기
         BookCreateRequest request = new BookCreateRequest();
         request.setTitle(title);
         request.setContent(content);
-        request.setUserId(Long.parseLong(userId));
-        request.setCoverImageUrl(coverImageUrl);
+        request.setUserId(Long.parseLong(userId)); // String -> Long 변환
+        request.setCoverImageUrl(coverImageUrl); // S3 주소가 들어감
 
-        // 3. 저장
+        // 4. 저장
         BookResponse response = bookService.createBook(request);
         return ResponseEntity.ok(response);
     }
