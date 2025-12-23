@@ -18,15 +18,15 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        # 1. H2 접속 주소 (파일 모드: /app/data/testdb 파일에 저장됨)
+        # 1. 수정된 H2 접속 주소 (인메모리 방식)
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:h2:file:/app/data/testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE"
+          value: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
         
         # 2. H2 기본 계정 정보
         - name: SPRING_DATASOURCE_USERNAME
           value: "sa"
         - name: SPRING_DATASOURCE_PASSWORD
-          value: "" # H2 기본값은 비밀번호 없음
+          value: "" 
 
         # 3. H2 드라이버 명시
         - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
