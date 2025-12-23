@@ -104,7 +104,14 @@ public class BookController {
             coverImageUrl = s3Service.uploadFromUrl(aiCoverUrl);
         }
 
-        BookResponse response = bookService.updateBook(id, title, content, coverImageUrl, userId);
+        // ★ BookCreateRequest 객체 생성
+        BookCreateRequest request = new BookCreateRequest();
+        request.setTitle(title);
+        request.setContent(content);
+        request.setCoverImageUrl(coverImageUrl);
+
+        // 서비스 호출
+        BookResponse response = bookService.updateBook(id, request, userId);
         return ResponseEntity.ok(response);
     }
 
