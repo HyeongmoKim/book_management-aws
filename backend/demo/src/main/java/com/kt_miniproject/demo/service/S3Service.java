@@ -40,24 +40,15 @@ public class S3Service {
 
     // 2. [심화] URL 이미지 다운로드 후 S3 업로드 (OpenAI 이미지 영구 저장용)
     public String uploadFromUrl(String imageUrl) throws IOException {
-        // 2-1. URL 연결
         URL url = new URL(imageUrl);
-        URLConnection connection = url.openConnection();
-        InputStream inputStream = connection.getInputStream();
+        try (InputStream inputStream = url.openStream()) {
+            String fileName = UUID.randomUUID().toString() + ".jpg";
 
-        // 2-2. 파일 이름 생성 (OpenAI는 보통 png임)
-        String fileName = UUID.randomUUID() + "_ai_generated.png";
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType("image/jpeg");
 
-        // 2-3. 메타데이터 설정 (중요: 스트림 크기 등)
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType("image/png"); // OpenAI DALL-E는 기본적으로 PNG
-        // 스트림 길이를 모를 때는 생략 가능하지만, 알 수 있다면 넣는 게 좋음
-
-        // 2-4. S3에 업로드
-        amazonS3.putObject(new PutObjectRequest(bucket, fileName, inputStream, metadata)
-                .withCannedAcl(CannedAccessControlList.PublicRead));
-
-        // 2-5. 업로드된 S3 주소 반환
-        return amazonS3.getUrl(bucket, fileName).toString();
+            amazonS3.putObject(bucket, fileName, inputStream, metadata);
+            return amazonS3.getUrl(bucket, fileName).toString();
+        }
     }
 }
