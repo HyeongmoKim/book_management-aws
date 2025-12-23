@@ -171,17 +171,21 @@ function BookEditPage() {
     setSuccess('');
 
     try {
+      // FormData 생성
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('content', formData.content);
+      formDataToSend.append('userId', userId); // 로그인된 사용자 ID
 
+      // 이미지 처리
       if (formData.coverImageType === 'upload' && uploadedImage) {
         formDataToSend.append('coverImage', uploadedImage);
       } else if (formData.coverImageType === 'ai' && previewImage) {
         formDataToSend.append('aiCoverUrl', previewImage);
       }
-      // coverImageType이 'existing'이면 기존 이미지 유지 (서버에서 처리)
+      // coverImageType이 'existing'이면 기존 이미지 유지 → 서버에서 처리
 
+      // PUT 요청 (멀티파트)
       const response = await api.put(`/api/books/${id}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -190,9 +194,7 @@ function BookEditPage() {
 
       if (response.data.success) {
         setSuccess('도서가 성공적으로 수정되었습니다!');
-        setTimeout(() => {
-          navigate(`/books/${id}`);
-        }, 1500);
+        setTimeout(() => navigate(`/books/${id}`), 1500);
       }
     } catch (err) {
       console.error('도서 수정 오류:', err);
