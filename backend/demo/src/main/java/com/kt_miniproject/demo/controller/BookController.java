@@ -15,13 +15,12 @@ import java.util.Map;
 import java.io.IOException;
 import java.util.List;
 
-private final OpenAIService openAIService; // 주입 필요
 
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
 public class BookController {
-
+    private final OpenAIService openAIService; // 주입 필요
     private final BookService bookService;
     private final S3Service s3Service; // ★ FileStore 대신 S3Service 주입
 
