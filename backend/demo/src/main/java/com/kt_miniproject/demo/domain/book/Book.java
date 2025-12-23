@@ -54,6 +54,7 @@ public class Book {
     private User user;
 
     // book : comment = 1 : N
+    @Builder.Default
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL) // ★ 추가
     private List<Comment> comments = new ArrayList<>();      // ★ 추가
 

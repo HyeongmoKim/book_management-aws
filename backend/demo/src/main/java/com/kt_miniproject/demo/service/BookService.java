@@ -17,7 +17,7 @@ public interface BookService {
     BookResponse getBookById(Long id);
 
     // 수정
-    BookResponse updateBook(Long id, BookCreateRequest request);
+    BookResponse updateBook(Long id, BookCreateRequest request, Long UserId);
 
     // 삭제
     void deleteBook(Long id, Long userId);

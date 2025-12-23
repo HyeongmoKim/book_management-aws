@@ -87,11 +87,14 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     @Transactional // 변경 감지를 위한 트랜잭션
-    public BookResponse updateBook(Long id, BookCreateRequest request) {
+    public BookResponse updateBook(Long id, BookCreateRequest request, Long userId) {
 
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found. id=" + id));
 
+        if (!book.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("수정 권한이 없습니다.");
+        }
         // Dirty Checking이 자동 update 수행
         book.setTitle(request.getTitle());
         book.setContent(request.getContent());
