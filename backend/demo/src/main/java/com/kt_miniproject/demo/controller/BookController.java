@@ -10,9 +10,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.kt_miniproject.demo.service.OpenAIService;
+import java.util.Map;
 import java.io.IOException;
 import java.util.List;
+
+private final OpenAIService openAIService; // 주입 필요
 
 @RestController
 @RequestMapping("/api/books")
@@ -139,12 +142,17 @@ public class BookController {
 
     // 7. AI로 표지 이미지 생성
     // PUT /api/books/{id}/generate-image
-    @PutMapping("/{id}/generate-image")
-    public ResponseEntity<String> generateAiImageUrl(
-            @PathVariable("id") Long id) {
+    @PostMapping("/generate-image")
+    public ResponseEntity<?> generateAiCover(@RequestBody Map<String, String> request) {
+        String prompt = request.get("prompt");
+        String apiKey = request.get("apiKey"); // 프론트에서 보낸 키 (없으면 null)
 
-        String bookUrl = bookService.generateAiImageUrl(id);
-        return ResponseEntity.ok(bookUrl);
+        try {
+            String imageUrl = openAIService.generateImage(prompt, apiKey);
+            return ResponseEntity.ok(Map.of("success", true, "imageUrl", imageUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/like")
