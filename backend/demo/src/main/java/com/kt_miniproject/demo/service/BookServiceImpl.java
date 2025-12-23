@@ -92,7 +92,7 @@ public class BookServiceImpl implements BookService {
                 .orElseThrow(() -> new RuntimeException("Book not found. id=" + id));
 
         // 작성자 체크
-        if (!book.getUser().getUserId().equals(userId)) {
+        if (!book.getUser().getId().equals(userId)) {
             throw new RuntimeException("작성자만 수정할 수 있습니다.");
         }
 
