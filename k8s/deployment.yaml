@@ -49,3 +49,8 @@ spec:
             secretKeyRef:
               name: aws-secret
               key: bucket-name
+        - name: OPENAI_API_KEY  # 스프링의 openai.api.key와 자동 연결됨
+          valueFrom:
+            secretKeyRef:
+              name: aws-secret
+              key: openai-api-key
