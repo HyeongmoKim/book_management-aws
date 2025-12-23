@@ -84,10 +84,11 @@ public class BookController {
     // PUT /api/books/{id}
     @PutMapping("/{id}")
     public ResponseEntity<BookResponse> updateBook(
-            @PathVariable("id") Long id,
-            @RequestBody BookCreateRequest request) {
-
-        BookResponse response = bookService.updateBook(id, request);
+            @PathVariable Long id,
+            @RequestBody BookCreateRequest request,
+            @RequestParam Long userId   // 로그인 사용자 ID
+    ) {
+        BookResponse response = bookService.updateBook(id, request, userId);
         return ResponseEntity.ok(response);
     }
 

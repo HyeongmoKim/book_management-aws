@@ -85,14 +85,19 @@ public class BookServiceImpl implements BookService {
     /**
      * 수정 (쓰기 트랜잭션 + Dirty Checking)
      */
+    @Transactional
     @Override
-    @Transactional // 변경 감지를 위한 트랜잭션
-    public BookResponse updateBook(Long id, BookCreateRequest request) {
+    public BookResponse updateBook(Long id, BookCreateRequest request, Long userId) {
 
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found. id=" + id));
 
-        // Dirty Checking이 자동 update 수행
+        // ✅ 작성자 검증
+        if (!book.getUser().getId().equals(userId)) {
+            throw new IllegalStateException("작성자만 수정할 수 있습니다.");
+        }
+
+        // Dirty Checking
         book.setTitle(request.getTitle());
         book.setContent(request.getContent());
         book.setCoverImageUrl(request.getCoverImageUrl());
